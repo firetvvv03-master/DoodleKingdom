@@ -214,13 +214,13 @@
     </section>
 
     <!-- ==================== MODE 2: DOODLE STUDIO ==================== -->
-    <section id="mode-studio" class="hidden absolute inset-0 w-full h-full bg-slate-100 flex flex-row">
+    <section id="mode-studio" class="hidden absolute inset-0 w-full h-full bg-slate-100 flex flex-col lg:flex-row">
       
-      <!-- STUDIO LEFT SIDEBAR (Optimized for Landscape side-by-side view) -->
-      <aside class="w-72 sm:w-80 lg:w-96 bg-white shadow-xl flex flex-col p-2.5 z-20 shrink-0 border-r border-slate-200 h-full overflow-hidden">
+      <!-- STUDIO LEFT SIDEBAR (Adapts automatically for phone/tablet portrait vs landscape) -->
+      <aside class="w-full lg:w-96 bg-white shadow-xl flex flex-col p-2 z-20 shrink-0 border-r border-slate-200 h-[38%] lg:h-full overflow-hidden">
         
         <!-- Category Navigation Tabs -->
-        <div class="mb-2 shrink-0">
+        <div class="mb-1.5 shrink-0">
           <div class="flex justify-between items-center mb-1">
             <label class="text-[10px] md:text-xs font-extrabold text-purple-700 uppercase tracking-wider">Skins & Backgrounds</label>
             <span class="text-[10px] font-bold text-slate-400">40 per category</span>
@@ -260,7 +260,7 @@
         </div>
 
         <!-- Search & Filter bar for skins -->
-        <div class="mb-2 shrink-0 flex gap-2">
+        <div class="mb-1.5 shrink-0 flex gap-2">
           <div class="relative flex-1">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
             <input type="text" id="skin-search" oninput="filterSkins()" placeholder="Search..." class="w-full pl-8 pr-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl outline-none focus:ring-2 focus:ring-purple-400">
@@ -272,14 +272,14 @@
 
         <!-- Skins Grid Container -->
         <div class="flex-1 overflow-y-auto pr-1">
-          <div id="skins-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 pb-2">
+          <div id="skins-grid" class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-3 gap-1.5 pb-2">
             <!-- Skins Loaded dynamically -->
           </div>
         </div>
       </aside>
 
       <!-- STUDIO CENTER DRAWING CANVAS & TOOLBAR -->
-      <div class="flex-1 relative bg-slate-200 flex flex-col items-center justify-between p-2 md:p-3 overflow-hidden h-full">
+      <div class="flex-1 relative bg-slate-200 flex flex-col items-center justify-between p-2 overflow-hidden h-[62%] lg:h-full">
         
         <!-- Top Toolbar -->
         <div class="w-full max-w-xl bg-white rounded-2xl shadow-md border-2 border-purple-200 p-1.5 flex flex-wrap items-center justify-between gap-1.5 z-10 shrink-0">
@@ -982,6 +982,7 @@
 
       renderSkinsGrid();
       buildAnimationUI();
+      window.addEventListener('resize', resizeStudioCanvas);
     }
 
     function resizeStudioCanvas() {
@@ -989,6 +990,7 @@
       if (!container) return;
 
       const size = Math.min(container.clientWidth - 10, container.clientHeight - 10, 420);
+      if (size <= 0) return;
       
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = studioCanvas.width;
@@ -1385,6 +1387,7 @@
 
     function resizeWorldCanvas() {
       const container = document.getElementById('world-canvas-container');
+      if (!container) return;
       worldCanvas.width = container.clientWidth;
       worldCanvas.height = container.clientHeight;
     }
@@ -1737,6 +1740,7 @@
         studioSec.classList.add('hidden');
         worldBtn.className = 'px-3 md:px-5 py-1 md:py-1.5 rounded-full font-bold text-xs md:text-base transition-all flex items-center gap-1.5 bg-white text-purple-700 shadow-md';
         studioBtn.className = 'px-3 md:px-5 py-1 md:py-1.5 rounded-full font-bold text-xs md:text-base transition-all flex items-center gap-1.5 text-white hover:text-yellow-200';
+        setTimeout(resizeWorldCanvas, 50);
       } else {
         worldSec.classList.add('hidden');
         studioSec.classList.remove('hidden');
