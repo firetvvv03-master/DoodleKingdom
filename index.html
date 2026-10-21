@@ -1,0 +1,1860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Doodle Kingdom Builders - Speech Bubbles, Sound FX & Save/Load</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Fredoka & Quicksand -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            fredoka: ['Fredoka', 'sans-serif'],
+            quicksand: ['Quicksand', 'sans-serif'],
+          },
+          colors: {
+            magicYellow: '#FFD166',
+            magicPink: '#FF6B6B',
+            magicPurple: '#A06CD5',
+            magicBlue: '#4ECDC4',
+            magicGreen: '#06D6A0',
+          },
+          animation: {
+            'bounce-gentle': 'bounceGentle 2s infinite',
+            'float': 'float 3s ease-in-out infinite',
+            'pulse-glow': 'pulseGlow 1.5s infinite alternate',
+          },
+          keyframes: {
+            bounceGentle: {
+              '0%, 100%': { transform: 'translateY(-3px)' },
+              '50%': { transform: 'translateY(3px)' }
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+              '50%': { transform: 'translateY(-5px) rotate(1deg)' }
+            },
+            pulseGlow: {
+              '0%': { boxShadow: '0 0 10px rgba(255,107,107,0.5)' },
+              '100%': { boxShadow: '0 0 22px rgba(255,209,102,0.9), 0 0 14px rgba(78,205,196,0.8)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    body {
+      font-family: 'Fredoka', sans-serif;
+      overflow: hidden;
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.05);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #A06CD5;
+      border-radius: 10px;
+    }
+    .candy-btn {
+      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+    }
+    .candy-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+    }
+    .sparkle-overlay {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+    }
+    .skin-card {
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .skin-card:hover {
+      transform: translateY(-3px) scale(1.02);
+    }
+    .anim-chip {
+      transition: all 0.15s ease;
+    }
+    .anim-chip.active {
+      background-color: #A06CD5;
+      color: #ffffff;
+      border-color: #7B2CBF;
+      box-shadow: 0 2px 6px rgba(160, 108, 213, 0.4);
+    }
+  </style>
+</head>
+<body class="h-screen w-screen flex flex-col bg-slate-900 text-slate-800">
+
+  <!-- TOP HEADER BAR -->
+  <header class="h-14 md:h-16 bg-gradient-to-r from-purple-600 via-pink-500 to-amber-400 px-3 md:px-5 flex items-center justify-between shadow-lg z-30 shrink-0">
+    <div class="flex items-center space-x-2 md:space-x-3">
+      <div class="w-9 h-9 md:w-11 md:h-11 bg-white rounded-2xl flex items-center justify-center shadow-md text-xl md:text-2xl animate-bounce-gentle">
+        🎨
+      </div>
+      <div>
+        <h1 class="text-lg md:text-2xl font-extrabold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] tracking-wide leading-none">
+          Doodle Kingdom
+        </h1>
+        <span class="text-[9px] md:text-xs font-bold text-yellow-200 tracking-wider hidden sm:inline-block">40 SKINS PER CATEGORY • SPEECH BUBBLES • SOUND FX • SAVE & LOAD</span>
+      </div>
+    </div>
+
+    <!-- Mode Switcher -->
+    <div class="flex items-center bg-black/20 p-1 rounded-full backdrop-blur-md border border-white/20">
+      <button id="nav-world-btn" onclick="switchMode('world')" class="px-3 md:px-5 py-1 md:py-1.5 rounded-full font-bold text-xs md:text-base transition-all flex items-center gap-1.5 bg-white text-purple-700 shadow-md">
+        <i class="fa-solid fa-earth-americas text-xs md:text-base"></i>
+        <span>Kingdom</span>
+      </button>
+      <button id="nav-studio-btn" onclick="switchMode('studio')" class="px-3 md:px-5 py-1 md:py-1.5 rounded-full font-bold text-xs md:text-base transition-all flex items-center gap-1.5 text-white hover:text-yellow-200">
+        <i class="fa-solid fa-wand-magic-sparkles text-xs md:text-base"></i>
+        <span>Studio</span>
+      </button>
+    </div>
+
+    <!-- Right Controls: Save/Load, Sound, Quests -->
+    <div class="flex items-center gap-1.5 md:gap-2">
+      <!-- Save Button -->
+      <button onclick="saveKingdom()" class="candy-btn bg-emerald-400 text-emerald-950 hover:bg-emerald-300 p-1.5 md:p-2 px-2.5 md:px-3 rounded-2xl font-bold flex items-center gap-1 border-2 border-emerald-500 text-xs md:text-sm" title="Save Kingdom">
+        <i class="fa-solid fa-floppy-disk"></i>
+        <span class="hidden sm:inline">Save</span>
+      </button>
+      <!-- Load Button -->
+      <button onclick="loadKingdom()" class="candy-btn bg-sky-300 text-sky-950 hover:bg-sky-200 p-1.5 md:p-2 px-2.5 md:px-3 rounded-2xl font-bold flex items-center gap-1 border-2 border-sky-400 text-xs md:text-sm" title="Load Kingdom">
+        <i class="fa-solid fa-folder-open"></i>
+        <span class="hidden sm:inline">Load</span>
+      </button>
+      
+      <button id="quest-toggle-btn" onclick="toggleQuestPanel()" class="candy-btn bg-yellow-300 text-yellow-950 hover:bg-yellow-200 p-1.5 md:p-2 px-2.5 md:px-3 rounded-2xl font-bold flex items-center gap-1.5 border-2 border-yellow-400 text-xs md:text-sm">
+        <i class="fa-solid fa-trophy text-yellow-700"></i>
+        <span class="hidden md:inline">Quests</span>
+        <span id="quest-count-badge" class="bg-red-500 text-white text-[10px] md:text-xs px-1.5 py-0.5 rounded-full font-bold">0/8</span>
+      </button>
+
+      <button id="sound-btn" onclick="toggleSound()" class="w-8 h-8 md:w-10 md:h-10 bg-white/90 hover:bg-white rounded-2xl flex items-center justify-center text-purple-700 font-bold text-sm md:text-lg shadow-md transition-all">
+        <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN APP AREA -->
+  <main class="relative flex-1 w-full h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] overflow-hidden">
+
+    <!-- ==================== MODE 1: KINGDOM WORLD ==================== -->
+    <section id="mode-world" class="absolute inset-0 w-full h-full bg-sky-300 flex flex-col">
+      <div id="world-canvas-container" class="relative w-full h-full overflow-hidden cursor-grab active:cursor-grabbing">
+        <canvas id="world-canvas" class="w-full h-full block"></canvas>
+        
+        <!-- Interactive Tip -->
+        <div class="absolute top-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md px-4 py-1 rounded-full shadow-lg border-2 border-purple-300 text-purple-900 font-bold text-xs md:text-sm pointer-events-none flex items-center gap-2 animate-bounce-gentle">
+          <span>✨ Click actors to speak, animate, resize, or move! ✨</span>
+        </div>
+
+        <!-- Selected Object Control Bar -->
+        <div id="item-control-panel" class="hidden absolute top-12 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md px-3 py-2 rounded-3xl shadow-2xl border-4 border-yellow-400 flex flex-col items-center gap-2 z-20 max-w-[95vw]">
+          <div class="flex items-center gap-2 flex-wrap justify-center border-b border-slate-200 pb-1.5 w-full">
+            <span id="selected-item-label" class="font-extrabold text-purple-700 px-1 text-xs md:text-sm uppercase tracking-wide">Actor</span>
+            
+            <!-- Speech Bubble Input -->
+            <div class="flex items-center gap-1 bg-purple-50 p-1 rounded-xl border border-purple-200">
+              <i class="fa-solid fa-comment-dots text-purple-600 text-xs px-1"></i>
+              <input type="text" id="speech-input" placeholder="Type speech..." onkeydown="if(event.key==='Enter') setSpeechFromInput()" class="w-28 sm:w-36 px-2 py-0.5 text-xs font-bold rounded-lg border border-slate-300 outline-none focus:ring-1 focus:ring-purple-500">
+              <button onclick="setSpeechFromInput()" class="candy-btn bg-purple-600 text-white px-2 py-0.5 rounded-lg font-bold text-[11px]">
+                Say!
+              </button>
+            </div>
+
+            <!-- Grow / Shrink / Delete Controls -->
+            <button onclick="scaleSelectedItem(1.15)" class="candy-btn bg-magicBlue text-white px-2 py-0.5 rounded-lg font-bold text-[11px]">
+              <i class="fa-solid fa-plus"></i> Grow
+            </button>
+            <button onclick="scaleSelectedItem(0.85)" class="candy-btn bg-magicBlue text-white px-2 py-0.5 rounded-lg font-bold text-[11px]">
+              <i class="fa-solid fa-minus"></i> Shrink
+            </button>
+            <button onclick="deleteSelectedItem()" class="candy-btn bg-magicPink text-white px-2 py-0.5 rounded-lg font-bold text-[11px]">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+            <button onclick="deselectItem()" class="text-slate-400 hover:text-slate-600 px-1 text-xs">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <!-- Selectable Animations Bar -->
+          <div class="flex items-center gap-1 overflow-x-auto max-w-full py-0.5 px-1" id="anim-selector-container">
+            <!-- Dynamic Animation buttons -->
+          </div>
+        </div>
+
+        <!-- Kingdom Quick Bar -->
+        <div class="absolute bottom-5 right-5 flex flex-col gap-3 z-10">
+          <button onclick="switchMode('studio')" class="candy-btn bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 text-white font-extrabold text-sm md:text-lg px-5 py-3 rounded-3xl shadow-2xl border-4 border-white flex items-center gap-2.5 hover:scale-105 transition-all">
+            <i class="fa-solid fa-paintbrush text-lg text-yellow-300"></i>
+            <span>Draw or Pick Skins!</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== MODE 2: DOODLE STUDIO ==================== -->
+    <section id="mode-studio" class="hidden absolute inset-0 w-full h-full bg-slate-100 flex flex-col md:flex-row">
+      
+      <!-- STUDIO LEFT SIDEBAR -->
+      <aside class="w-full md:w-80 lg:w-96 bg-white shadow-xl flex flex-col p-2.5 md:p-3.5 z-20 shrink-0 border-r border-slate-200 h-2/5 md:h-full overflow-hidden">
+        
+        <!-- Category Navigation Tabs -->
+        <div class="mb-2 shrink-0">
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-[11px] md:text-xs font-extrabold text-purple-700 uppercase tracking-wider">Unique Skins & Backgrounds</label>
+            <span class="text-[10px] font-bold text-slate-400">40 per category</span>
+          </div>
+          <div class="grid grid-cols-4 gap-1">
+            <button onclick="setCategory('people')" id="cat-people" class="cat-btn candy-btn bg-purple-600 text-white p-1.5 rounded-xl font-bold flex items-center justify-center gap-1 text-[10px] md:text-xs">
+              <span>👥 Heroes</span>
+            </button>
+            <button onclick="setCategory('animal')" id="cat-animal" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1.5 rounded-xl font-bold flex items-center justify-center gap-1 text-[10px] md:text-xs">
+              <span>🐾 Animals</span>
+            </button>
+            <button onclick="setCategory('tool')" id="cat-tool" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1.5 rounded-xl font-bold flex items-center justify-center gap-1 text-[10px] md:text-xs">
+              <span>🛠️ Tools</span>
+            </button>
+            <button onclick="setCategory('monster')" id="cat-monster" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1.5 rounded-xl font-bold flex items-center justify-center gap-1 text-[10px] md:text-xs">
+              <span>👾 Monsters</span>
+            </button>
+            <button onclick="setCategory('vehicle')" id="cat-vehicle" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1.5 rounded-xl font-bold flex items-center justify-center gap-1 text-[10px] md:text-xs">
+              <span>🚒 Vehicles</span>
+            </button>
+            <button onclick="setCategory('castle')" id="cat-castle" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1.5 rounded-xl font-bold flex items-center justify-center gap-1 text-[10px] md:text-xs">
+              <span>🏰 Castles</span>
+            </button>
+            <button onclick="setCategory('tree')" id="cat-tree" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1.5 rounded-xl font-bold flex items-center justify-center gap-1 text-[10px] md:text-xs">
+              <span>🌳 Nature</span>
+            </button>
+            <button onclick="setCategory('accessories')" id="cat-accessories" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1.5 rounded-xl font-bold flex items-center justify-center gap-1 text-[10px] md:text-xs">
+              <span>👑 Gear</span>
+            </button>
+            <button onclick="setCategory('backgrounds')" id="cat-backgrounds" class="cat-btn candy-btn bg-slate-100 text-slate-700 col-span-4 p-1 rounded-xl font-bold flex items-center justify-center gap-1 text-[10px] md:text-xs">
+              <span>🏞️ Worlds (40 Background Themes)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Search & Filter bar for skins -->
+        <div class="mb-2 shrink-0 flex gap-2">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input type="text" id="skin-search" oninput="filterSkins()" placeholder="Search panda, wizard, dragon, castle..." class="w-full pl-8 pr-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl outline-none focus:ring-2 focus:ring-purple-400">
+          </div>
+          <span id="skin-count-indicator" class="bg-purple-100 text-purple-700 text-[10px] md:text-[11px] font-extrabold px-2 py-1.5 rounded-xl flex items-center whitespace-nowrap">
+            40 Skins
+          </span>
+        </div>
+
+        <!-- Skins Grid Container -->
+        <div class="flex-1 overflow-y-auto pr-1">
+          <div id="skins-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-2 lg:grid-cols-3 gap-1.5 pb-2">
+            <!-- Skins Loaded dynamically -->
+          </div>
+        </div>
+      </aside>
+
+      <!-- STUDIO CENTER DRAWING CANVAS & TOOLBAR -->
+      <div class="flex-1 relative bg-slate-200 flex flex-col items-center justify-between p-2 md:p-4 overflow-hidden h-3/5 md:h-full">
+        
+        <!-- Top Toolbar -->
+        <div class="w-full max-w-2xl bg-white rounded-2xl shadow-md border-2 border-purple-200 p-2 flex flex-wrap items-center justify-between gap-2 z-10 shrink-0">
+          <!-- Colors -->
+          <div id="color-palette" class="flex items-center gap-1 overflow-x-auto max-w-[220px] sm:max-w-none">
+            <!-- Palette colors injected dynamically -->
+          </div>
+
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <!-- Rainbow Brush -->
+            <button id="rainbow-brush-btn" onclick="toggleRainbowBrush()" class="px-2 py-1 rounded-xl bg-gradient-to-r from-red-400 via-green-400 to-purple-500 text-white font-extrabold text-[11px] md:text-xs shadow-sm border border-white hover:opacity-90 flex items-center gap-1">
+              <i class="fa-solid fa-wand-magic"></i> Rainbow
+            </button>
+
+            <!-- Pen & Eraser -->
+            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+              <button id="tool-pen" onclick="setTool('pen')" class="px-2 py-1 rounded-lg bg-purple-600 text-white font-bold text-xs">
+                <i class="fa-solid fa-pen-nib"></i> Pen
+              </button>
+              <button id="tool-eraser" onclick="setTool('eraser')" class="px-2 py-1 rounded-lg bg-slate-200 text-slate-700 font-bold text-xs">
+                <i class="fa-solid fa-eraser"></i> Eraser
+              </button>
+            </div>
+
+            <!-- Brush Size Slider -->
+            <div class="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-xl border border-slate-200">
+              <span class="text-[9px] font-extrabold text-slate-500 uppercase">Size</span>
+              <input type="range" id="brush-size" min="3" max="36" value="10" oninput="updateBrushSize(this.value)" class="w-12 md:w-16 accent-purple-600 cursor-pointer">
+              <span id="brush-size-val" class="text-[11px] font-extrabold text-purple-700 w-5">10</span>
+            </div>
+
+            <!-- Clear Button -->
+            <button onclick="clearCanvas()" class="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-600 font-bold rounded-xl text-xs border border-red-200 transition-all flex items-center gap-1">
+              <i class="fa-solid fa-trash-can"></i> Clear
+            </button>
+          </div>
+        </div>
+
+        <!-- CANVAS DRAWING BOARD -->
+        <div id="studio-canvas-container" class="relative flex-1 w-full h-full flex items-center justify-center p-1 md:p-3 overflow-hidden my-1">
+          <div class="relative bg-white rounded-3xl shadow-2xl border-4 md:border-8 border-amber-300 p-1 flex items-center justify-center max-w-full max-h-full aspect-square">
+            <canvas id="studio-canvas" class="bg-white rounded-2xl cursor-crosshair touch-none shadow-inner block"></canvas>
+            
+            <div id="active-skin-title" class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-slate-900/80 backdrop-blur-md text-yellow-300 text-[10px] md:text-xs font-bold px-3 py-1 rounded-full pointer-events-none border border-white/20 whitespace-nowrap">
+              🎨 Blank Canvas (Clean Start)
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTTOM ACTION BUTTON -->
+        <div class="w-full flex justify-center z-20 shrink-0 pb-1">
+          <button onclick="bringToLife()" class="candy-btn bg-gradient-to-r from-amber-400 via-pink-500 to-purple-600 text-white font-extrabold text-base md:text-xl px-6 md:px-8 py-2.5 md:py-3.5 rounded-3xl shadow-2xl border-4 border-white flex items-center gap-2.5 hover:scale-105 animate-pulse-glow transition-all">
+            <i class="fa-solid fa-wand-magic-sparkles text-xl md:text-2xl text-yellow-200"></i>
+            <span>Bring To Life Standing Still! ✨</span>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== QUEST OVERLAY ==================== -->
+    <div id="quest-panel" class="hidden absolute top-4 right-4 w-72 md:w-80 bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border-4 border-yellow-400 p-4 z-40 animate-float">
+      <div class="flex justify-between items-center mb-2 border-b pb-2">
+        <h3 class="text-base md:text-lg font-extrabold text-purple-700 flex items-center gap-2">
+          <span>🏆</span> Kingdom Goals
+        </h3>
+        <button onclick="toggleQuestPanel()" class="text-slate-400 hover:text-slate-700 text-base">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <p class="text-[11px] text-slate-500 mb-2.5 font-bold">Draw or place items from categories to complete goals!</p>
+      
+      <div id="quest-list" class="space-y-1.5">
+        <!-- Quest Items Dynamic -->
+      </div>
+    </div>
+
+    <!-- SPARKLE FX CONTAINER -->
+    <div id="fx-container" class="sparkle-overlay"></div>
+
+  </main>
+
+  <!-- ==================== JAVASCRIPT ENGINE ==================== -->
+  <script>
+    /* --------------------------------------------------
+     * 1. AUDIO SYNTHESIZER (EXPANDED SOUND FX FOR CATEGORIES & ACTIONS)
+     * -------------------------------------------------- */
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      try {
+        initAudio();
+        const now = audioCtx.currentTime;
+
+        if (type === 'tap') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(450, now);
+          osc.frequency.exponentialRampToValueAtTime(750, now + 0.05);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.05);
+        } else if (type === 'bounce') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(260, now);
+          osc.frequency.exponentialRampToValueAtTime(480, now + 0.1);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.1);
+        } else if (type === 'magic') {
+          const freqs = [523.25, 659.25, 783.99, 1046.50];
+          freqs.forEach((f, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, now + i * 0.04);
+            gain.gain.setValueAtTime(0.12, now + i * 0.04);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.04 + 0.15);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + i * 0.04);
+            osc.stop(now + i * 0.04 + 0.15);
+          });
+        } else if (type === 'pop') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(600, now);
+          osc.frequency.exponentialRampToValueAtTime(180, now + 0.05);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.05);
+        } else if (type === 'speech') {
+          // Cute blip sound when speaking
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(520, now);
+          osc.frequency.linearRampToValueAtTime(880, now + 0.08);
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else if (type === 'save') {
+          // Save chime
+          [440, 554.37, 659.25].forEach((f, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(f, now + i * 0.06);
+            gain.gain.setValueAtTime(0.15, now + i * 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.2);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + i * 0.06);
+            osc.stop(now + i * 0.06 + 0.2);
+          });
+        } else if (type === 'load') {
+          // Load chime
+          [659.25, 554.37, 440, 880].forEach((f, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, now + i * 0.05);
+            gain.gain.setValueAtTime(0.15, now + i * 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.18);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + i * 0.05);
+            osc.stop(now + i * 0.05 + 0.18);
+          });
+        } else if (type === 'people') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(400, now);
+          osc.frequency.linearRampToValueAtTime(600, now + 0.06);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.06);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.06);
+        } else if (type === 'animal') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(300, now);
+          osc.frequency.exponentialRampToValueAtTime(650, now + 0.08);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else if (type === 'tool') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, now);
+          osc.frequency.linearRampToValueAtTime(120, now + 0.07);
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.07);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.07);
+        } else if (type === 'monster') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(150, now);
+          osc.frequency.exponentialRampToValueAtTime(90, now + 0.12);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.12);
+        } else if (type === 'vehicle') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.linearRampToValueAtTime(350, now + 0.1);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.1);
+        } else if (type === 'castle') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(200, now);
+          osc.frequency.linearRampToValueAtTime(400, now + 0.12);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.12);
+        } else if (type === 'tree') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(500, now);
+          osc.frequency.linearRampToValueAtTime(300, now + 0.07);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.07);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.07);
+        } else if (type === 'accessories') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(800, now);
+          osc.frequency.exponentialRampToValueAtTime(1200, now + 0.06);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.06);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.06);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('sound-icon');
+      if (soundEnabled) {
+        icon.className = 'fa-solid fa-volume-high';
+        playSound('tap');
+      } else {
+        icon.className = 'fa-solid fa-volume-xmark text-slate-400';
+      }
+    }
+
+    /* --------------------------------------------------
+     * 2. EXPANDED UNIQUE SKINS (EXACTLY 40 FOR ALL 9 CATEGORIES)
+     * -------------------------------------------------- */
+    const CATEGORIES = ['people', 'animal', 'tool', 'monster', 'vehicle', 'castle', 'tree', 'accessories', 'backgrounds'];
+    let activeCategory = 'people';
+    let currentSkinIndex = 0; // 0 = Blank Canvas
+    let currentWorldBackground = 0; // 0 = default sky
+    let customBackgroundDataUrl = null;
+
+    const DEFAULT_SPEECH = {
+      people: ["Hello there!", "Ready for adventure!", "Let's explore!", "For the Kingdom!", "Greetings!"],
+      animal: ["Woof!", "Meow!", "Roar!", "Squeak!", "Chirp!"],
+      tool: ["Clang!", "Whirrr!", "Chop chop!", "Fix it up!", "Spark!"],
+      monster: ["Grrr!", "Rawr!", "Boo!", "Blub blub!", "Muahaha!"],
+      vehicle: ["Vroom vroom!", "Beep beep!", "Zoom!", "Honk!", "Whoosh!"],
+      castle: ["Halt!", "Welcome!", "Protect the realm!", "Grand fortress!", "Shine!"],
+      tree: ["Rustle rustle!", "Bloom!", "Fresh air!", "Grow tall!", "Peaceful!"],
+      accessories: ["Shine bright!", "Power up!", "Magic glowing!", "Sparkle!", "Equipped!"]
+    };
+
+    const ANIMATIONS = [
+      { id: 'idle', label: '🧍 Still' },
+      { id: 'walking', label: '🚶 Walk' },
+      { id: 'running', label: '🏃 Run' },
+      { id: 'jumping', label: '🦘 Jump' },
+      { id: 'sitting', label: '🪑 Sit' },
+      { id: 'dancing', label: '💃 Dance' },
+      { id: 'sleeping', label: '😴 Sleep' },
+      { id: 'climbing', label: '🧗 Climb' },
+      { id: 'driving', label: '🚗 Drive' }
+    ];
+
+    const ITEM_NAMES = {
+      people: Array.from({length: 40}, (_, i) => [
+        'Chubi Wizard', 'Heavy Tank Knight', 'Skinny Mage', 'Bulky Mech Robot', 'Fairy Queen', 'Pirate Captain', 'Ninja Shadow', 'Cyber Hacker',
+        'Astronaut Cadet', 'Dino Costume Boy', 'Royal Prince', 'Mermaid Princess', 'Viking Berserker', 'Samurai Blade', 'Elf Archer', 'Cute Ghost',
+        'Superhero Star', 'Cyborg Medic', 'Jester Ace', 'Pajama Kid', 'Chef Supreme', 'Detective Noir', 'Alien Visitor', 'Grandmaster Wizard',
+        'Mecha Pilot', 'Snow Explorer', 'Desert Nomad', 'Gladiator Hero', 'Vampire Lord', 'Pixie Sprite', 'Steampunk Scholar', 'Shadow Assassin',
+        'Robot Guard', 'Android Girl', 'Chibi Paladin', 'Forest Ranger', 'Time Traveler', 'Oracle Mystic', 'Bounty Hunter', 'Dragon Tamer'
+      ][i]),
+      animal: Array.from({length: 40}, (_, i) => [
+        'Playful Panda', 'Roaring Bengal Tiger', 'Chubby Golden Retriever', 'Whimsical Pink Piglet', 'Wise Forest Owl', 'Majestic White Lion', 'Fluffy Angora Bunny', 'Hopping Red Kangaroo',
+        'Cuddly Koala Bear', 'Sly Red Fox', 'Gentle Giant Elephant', 'Curious Sea Otter', 'Chubby Emperor Penguin', 'Spotted Savannah Giraffe', 'Playful Dolphin', 'Mischievous Raccoon',
+        'Spiky Hedgehog', 'Lazy Tree Sloth', 'Tropical Blue Macaw', 'Green Sea Turtle', 'Chubby Hamster', 'Spotted Cheetah', 'Alpine Gray Wolf', 'Chubby Hippo',
+        'Horned Rhinoceros', 'Pink Flamingo', 'Fluffy Alpaca', 'Chubby Beaver', 'Cute Red Panda', 'Spotted Leopard', 'Friendly Harbor Seal', 'Majestic Sea Orca',
+        'Wild Plains Zebra', 'Forest Brown Bear', 'Swift Falcon', 'Royal Peacock', 'Chubby Walrus', 'Golden Chameleon', 'Chubby Manatee', 'Playful Squirrel'
+      ][i]),
+      tool: Array.from({length: 40}, (_, i) => [
+        'Heavy Construction Hammer', 'Silver Hand Saw', 'Steel Screwdriver', 'Adjustable Wrench', 'Pneumatic Drill', 'Craftsman Chisel', 'Iron Anvil', 'Solid Steel Crowbar',
+        'Chubby Safety Axe', 'Sharp Utility Scissors', 'Iron Digging Shovel', 'Steel Garden Rake', 'Digital Vernier Caliper', 'Laser Tape Measure', 'Bubble Spirit Level', 'Master Key Tool',
+        'Soldering Iron Tool', 'Adjustable Pipe Wrench', 'Paint Roller Tool', 'Chubby Plumber Plunger', 'Pruning Shears', 'Mechanic Socket Wrench', 'Pickaxe Miner', 'Safety Goggles',
+        'Precision Tweezers', 'Carpenter Square', 'Steel Workbench Vise', 'Oil Can Injector', 'Wire Cutter Pliers', 'Flame Blowtorch', 'Hand Trowel', 'Heavy Sledgehammer',
+        'Hydraulic Jack', 'Magnet Bar', 'Heat Gun Tool', 'Tool Belt Pouch', 'Grease Gun', 'Hand Clamp', 'Chain Saw Tool', 'Brass Compass Tool'
+      ][i]),
+      monster: Array.from({length: 40}, (_, i) => [
+        'Round Slime Blob', 'Multi-Eye Cyclops', 'Winged Fire Drake', 'Tentacle Deep Horror', 'Heavy Stone Golem', 'Mushroom Spore Beast', 'Fire Spark Imp', 'Shadow Beetle',
+        'Frost Yeti Giant', 'Lava Fiend', 'Crystal Behemoth', 'Thunder Eagle', 'Toxic Blob Slug', 'Void Phantom', 'Mecha Kaiju', 'Spiky Sea Urchin',
+        'Bubble Jellyfish', 'Glow Spore Monster', 'Iron Sentinel Monster', 'Plasma Drake', 'Cosmic Tentacle', 'Sand Crawler', 'Swamp Monster', 'Cloud Cloudling',
+        'Magma Turtle', 'Sonic Bat Creature', 'Venom Tarantula', 'Abyssal Shark Monster', 'Solar Phoenix', 'Lunar Wraith', 'Copper Centipede', 'Titan Horn Beetle',
+        'Gargoyle Statue', 'Biolumi Sea Slug', 'Frost Viper Snake', 'Flame Wyvern', 'Spectral Hound', 'Electric Stingray', 'Acid Slime Mold', 'Biohazard Spider'
+      ][i]),
+      vehicle: Array.from({length: 40}, (_, i) => [
+        'Chubby Yellow Bus', 'Low-Rider Sports Car', 'Tall Double-Decker', 'Long Steam Locomotive', 'Round Flying Saucer', 'Tall Saturn Rocket', 'Compact Vespa Scooter', 'Copter Chopper',
+        'Hover Hoverboard', 'Steampunk Airship Zeppelin', 'Bigfoot Monster Truck', 'Formula Racecar', 'Deep Submarine Pod', 'Moon Buggy Rover', 'Dragon Wings Jet', 'Flying Magic Carpet',
+        'Fire Truck Engine', 'Police Interceptor', 'Cute Ice Cream Truck', 'Heavy Farm Tractor', 'Cargo Container Ship', 'Supersonic Jet', 'Hang Glider Wing', 'Delivery Box Van',
+        'Armored Battle Tank', 'Electric Cargo Trike', 'Pogo Hopper Vehicle', 'Futuristic Monorail', 'Bionic Walking Mech', 'Solar Skiff Boat', 'Vintage Roadster', 'City Taxi Cab',
+        'Heavy Bulldozer', 'Tall Crane Lifter', 'Excavator Digger', 'Street Sweeper', 'Post Mail Truck', 'Formula Go-Kart', 'Speed Speedboat', 'Hover Car Pod'
+      ][i]),
+      castle: Array.from({length: 40}, (_, i) => [
+        'Broad Stone Fortress', 'Tall Wizard Spire', 'Pagoda Temple Tower', 'Floating Sky Citadel', 'Deep Sea Coral Palace', 'Dark Doom Keep', 'Golden Pyramid Temple', 'Victorian Clocktower',
+        'Prism Crystal Palace', 'Volcano Obsidian Fortress', 'Cloud Haven Castle', 'Glacier Ice Citadel', 'Desert Oasis Palace', 'Jungle Ancient Ruins', 'Steampunk Smelter Tower', 'Cyber Neon City Hall',
+        'Elven Tree Castle', 'Dwarven Vault Stronghold', 'Magic Academy Arcana', 'Royal Throne Room', 'Outpost Watchtower', 'Haunted Gothic Manor', 'Monastery Shrine', 'Grand Colosseum',
+        'Observatory Telescope Dome', 'Lighthouse Tower', 'Bazaar Market Stand', 'Underground Bunker', 'Sky Harbor Docks', 'Neon Arcade Dome', 'Retro Diner Cafe', 'Candy Gumdrop Palace',
+        'Gingerbread Fort', 'Mushroom Village Tower', 'Coral Reef Temple', 'Space Orbital Station', 'Lunar Base Dome', 'Mars Habitat Dome', 'Asteroid Base Fort', 'Alien Crystal Pyramid'
+      ][i]),
+      tree: Array.from({length: 40}, (_, i) => [
+        'Wide Chubby Oak', 'Tall Swaying Palm', 'Spiral Magic Willow', 'Giant Dome Mushroom', 'Crystal Pillar Shaft', 'Cherry Blossom Sakura', 'Round Bonsai Bush', 'Tall Pine Needle Tree',
+        'Weeping Willow Drop', 'Fat Baobab Trunk', 'Spiky Saguaro Cactus', 'Tall Bamboo Stems', 'Autumn Maple Orange', 'Frost Coated Pine', 'Lava Glowing Tree', 'Neon Cyber Tree',
+        'Golden Apple Tree', 'Silver Birch Trunk', 'Redwood Giant Sequoia', 'Mangrove Water Roots', 'Floating Spore Tree', 'Starlight Galaxy Flora', 'Cosmic Star Bush', 'Fern Giant Leaf',
+        'Prism Crystal Tree', 'Void Shadow Tree', 'Solar Sun Palm', 'Lunar Moon Oak', 'Quantum Cyber Bush', 'Plasma Energy Tree', 'Echo Crystal Spire', 'Cyber Thorn Tree',
+        'Bioluminescent Mushroom Tree', 'Spore Cluster Tree', 'Shimmering Coral Fern', 'Amber Fossilized Tree', 'Stone Bark Tree', 'Glacier Ice Spire Tree', 'Volcanic Ash Fern', 'Deep Sea Kelp Tree'
+      ][i]),
+      accessories: Array.from({length: 40}, (_, i) => [
+        'Royal Crown Tiara', 'Oak Wizard Staff', 'Dragon Crest Shield', 'Angel Feather Wings', 'Spell Tome Book', 'Knight Greatsword', 'Golden Skeleton Key', 'Star Wand Scepter',
+        'Cyber Visor Helmet', 'Dual Jetpack Unit', 'Plasma Energy Blade', 'Aegis Force Shield', 'Crystal Vision Orb', 'Phoenix Flame Feather', 'Shadow Phantom Cloak', 'Viking Battle Axe',
+        'Ninja Shuriken Star', 'Gold Scepter Staff', 'Pirate Cutlass Sword', 'Steampunk Brass Goggles', 'Heavy Mech Shoulder Armor', 'Glowing Halo Ring', 'Demon Horn Set', 'Fluffy Cat Ears',
+        'Hero Flying Cape', 'Treasure Chest Box', 'Magic Potion Flask', 'Ancient Hourglass', 'Pirate Compass', 'Brass Telescope', 'Genie Magic Lamp', 'Power Gem Ring',
+        'Diamond Pendant', 'Silver Locket', 'Champion Gold Medal', 'Heavy Title Belt', 'Tower Kite Shield', 'Alchemist Vial Set', 'Rune Engraved Stone', 'Core Energy Battery'
+      ][i]),
+      backgrounds: Array.from({length: 40}, (_, i) => [
+        'Deep Space Galaxy', 'Underwater Coral Reef', 'Enchanted Magical Forest', 'Wild Jungle Safari', 'Cyberpunk Neon City',
+        'Gritty Street Alley', 'Candy Dessert Kingdom', 'Volcanic Lava Wasteland', 'Arctic Frozen Tundra', 'Sky Cloud Floating Island',
+        'Ancient Desert Ruins', 'Haunted Spooky Woods', 'Retro 8-Bit Pixel Arcade', 'Steampunk Factory Gear', 'Golden Sunset Autumn',
+        'Tokyo Midnight Neon', 'Glowing Crystal Cave', 'Alien Mars Colony', 'Orbital Space Station Interior', 'Royal Castle Garden',
+        'Mystic Mountain Peak', 'Rainbow Cloud Kingdom', 'Pirate Island Beach', 'Deep Ocean Trench', 'Mushroom Village Valley',
+        'Emerald Forest Grove', 'Sunken Atlantis Ruins', 'Cyber Neon Alleyway', 'Golden Wheat Field', 'Dark Shadow Realm',
+        'Starlight Nebula Sky', 'Glacial Snow Valley', 'Fiery Dragon Lair', 'Bamboo Forest Zen', 'Ancient Stone Henge',
+        'Fairy Tale Village', 'Vintage Wild West', 'Retro Synthwave Grid', 'Magical Arcana Library', 'Floating Sky Citadel'
+      ][i])
+    };
+
+    function generateSkinSVG(cat, index) {
+      if (index === 0) return null;
+      const i = index - 1;
+      let svgContent = '';
+
+      // Unique vector variations for all 40 skins in categories
+      if (cat === 'people') {
+        const variant = i % 8;
+        const colorHue = (i * 25) % 360;
+        if (variant === 0) {
+          svgContent = `<circle cx="100" cy="125" r="55" fill="hsl(${colorHue}, 70%, 55%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="65" r="35" fill="#FFD166" stroke="#000" stroke-width="5"/><circle cx="88" cy="60" r="5" fill="#000"/><circle cx="112" cy="60" r="5" fill="#000"/><path d="M 85 78 Q 100 92 115 78" fill="none" stroke="#000" stroke-width="4"/><path d="M 60 40 Q 100 10 140 40 Z" fill="hsl(${(colorHue+120)%360}, 80%, 50%)" stroke="#000" stroke-width="4"/>`;
+        } else if (variant === 1) {
+          svgContent = `<rect x="85" y="70" width="30" height="110" rx="12" fill="hsl(${colorHue}, 80%, 60%)" stroke="#000" stroke-width="5"/><ellipse cx="100" cy="45" rx="22" ry="30" fill="#FDF0D5" stroke="#000" stroke-width="5"/><line x1="90" y1="42" x2="95" y2="42" stroke="#000" stroke-width="4"/><line x1="105" y1="42" x2="110" y2="42" stroke="#000" stroke-width="4"/><path d="M 92 58 L 108 58" stroke="#000" stroke-width="3"/><rect x="75" y="15" width="50" height="18" fill="hsl(${(colorHue+180)%360}, 70%, 45%)" stroke="#000" stroke-width="3"/>`;
+        } else if (variant === 2) {
+          svgContent = `<path d="M 35 75 L 165 75 L 140 170 L 60 170 Z" fill="hsl(${colorHue}, 75%, 50%)" stroke="#000" stroke-width="5"/><rect x="75" y="25" width="50" height="50" rx="8" fill="#FFE3A8" stroke="#000" stroke-width="5"/><rect x="82" y="42" width="12" height="6" fill="#000"/><rect x="106" y="42" width="12" height="6" fill="#000"/><path d="M 85 62 L 115 62" stroke="#000" stroke-width="4"/><polygon points="100,5 125,25 75,25" fill="#3a0ca3" stroke="#000" stroke-width="4"/>`;
+        } else if (variant === 3) {
+          svgContent = `<polygon points="100,30 165,175 35,175" fill="hsl(${colorHue}, 65%, 55%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="70" r="24" fill="#FDF0D5" stroke="#000" stroke-width="4"/><circle cx="92" cy="68" r="3" fill="#000"/><circle cx="108" cy="68" r="3" fill="#000"/><path d="M 95 82 Q 100 88 105 82" stroke="#000" stroke-width="3" fill="none"/><path d="M 60 70 L 100 10 L 140 70 Z" fill="#4361EE" stroke="#000" stroke-width="4"/>`;
+        } else if (variant === 4) {
+          svgContent = `<rect x="50" y="85" width="100" height="85" rx="10" fill="#8D99AE" stroke="#000" stroke-width="5"/><rect x="65" y="30" width="70" height="50" rx="8" fill="#2B2D42" stroke="#000" stroke-width="5"/><rect x="75" y="45" width="50" height="15" rx="4" fill="hsl(${colorHue}, 90%, 50%)"/><circle cx="100" cy="120" r="18" fill="#EF476F" stroke="#000" stroke-width="3"/>`;
+        } else if (variant === 5) {
+          svgContent = `<circle cx="100" cy="65" r="42" fill="hsl(${colorHue}, 80%, 75%)" stroke="#000" stroke-width="5"/><rect x="80" y="105" width="40" height="50" rx="10" fill="#B5179E" stroke="#000" stroke-width="4"/><circle cx="85" cy="60" r="8" fill="#000"/><circle cx="115" cy="60" r="8" fill="#000"/><circle cx="87" cy="58" r="3" fill="#FFF"/><circle cx="117" cy="58" r="3" fill="#FFF"/><path d="M 93 80 Q 100 88 107 80" fill="none" stroke="#000" stroke-width="3"/>`;
+        } else if (variant === 6) {
+          svgContent = `<ellipse cx="60" cy="110" rx="35" ry="18" fill="hsl(${colorHue}, 90%, 65%)" opacity="0.8" stroke="#000" stroke-width="3"/><ellipse cx="140" cy="110" rx="35" ry="18" fill="hsl(${colorHue}, 90%, 65%)" opacity="0.8" stroke="#000" stroke-width="3"/><path d="M 80 160 L 100 90 L 120 160 Z" fill="#FF6B6B" stroke="#000" stroke-width="4"/><circle cx="100" cy="60" r="22" fill="#FFE3A8" stroke="#000" stroke-width="4"/><circle cx="93" cy="58" r="3" fill="#000"/><circle cx="107" cy="58" r="3" fill="#000"/><path d="M 95 70 Q 100 76 105 70" stroke="#000" stroke-width="3" fill="none"/>`;
+        } else {
+          svgContent = `<ellipse cx="100" cy="120" rx="35" ry="45" fill="#111" stroke="#000" stroke-width="5"/><circle cx="100" cy="55" r="28" fill="#222" stroke="#000" stroke-width="5"/><rect x="80" y="45" width="40" height="15" fill="#FDF0D5"/><circle cx="90" cy="52" r="3" fill="#000"/><circle cx="110" cy="52" r="3" fill="#000"/><path d="M 60 55 L 140 55" stroke="hsl(${colorHue}, 90%, 50%)" stroke-width="6"/>`;
+        }
+      } else if (cat === 'animal') {
+        const variant = i % 8;
+        const colorHue = (i * 30) % 360;
+        if (variant === 0) {
+          svgContent = `<circle cx="65" cy="45" r="18" fill="#000"/><circle cx="135" cy="45" r="18" fill="#000"/><ellipse cx="100" cy="115" rx="55" ry="45" fill="#FFF" stroke="#000" stroke-width="5"/><circle cx="100" cy="65" r="40" fill="#FFF" stroke="#000" stroke-width="5"/><ellipse cx="85" cy="62" rx="12" ry="8" fill="#000" transform="rotate(-15 85 62)"/><ellipse cx="115" cy="62" rx="12" ry="8" fill="#000" transform="rotate(15 115 62)"/><circle cx="85" cy="62" r="3" fill="#FFF"/><circle cx="115" cy="62" r="3" fill="#FFF"/><ellipse cx="100" cy="78" rx="8" ry="5" fill="#000"/>`;
+        } else if (variant === 1) {
+          svgContent = `<polygon points="50,25 75,60 40,65" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="4"/><polygon points="150,25 125,60 160,65" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="4"/><ellipse cx="100" cy="120" rx="50" ry="40" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="70" r="38" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="5"/><path d="M 90 32 L 100 48 L 110 32" stroke="#000" stroke-width="4" fill="none"/><circle cx="85" cy="65" r="6" fill="#000"/><circle cx="115" cy="65" r="6" fill="#000"/><polygon points="100,75 95,82 105,82" fill="#000"/>`;
+        } else if (variant === 2) {
+          svgContent = `<path d="M 50 50 Q 30 90 45 100 Z" fill="#D7263D" stroke="#000" stroke-width="4"/><path d="M 150 50 Q 170 90 155 100 Z" fill="#D7263D" stroke="#000" stroke-width="4"/><ellipse cx="100" cy="125" rx="45" ry="40" fill="hsl(${colorHue}, 70%, 60%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="70" r="35" fill="hsl(${colorHue}, 70%, 60%)" stroke="#000" stroke-width="5"/><ellipse cx="100" cy="80" rx="18" ry="12" fill="#FFF" stroke="#000" stroke-width="3"/><circle cx="88" cy="65" r="5" fill="#000"/><circle cx="112" cy="65" r="5" fill="#000"/><ellipse cx="100" cy="76" rx="6" ry="4" fill="#000"/>`;
+        } else if (variant === 3) {
+          svgContent = `<path d="M 40 100 Q 20 140 50 150 Z" fill="#2A9D8F" stroke="#000" stroke-width="4"/><path d="M 160 100 Q 180 140 150 150 Z" fill="#2A9D8F" stroke="#000" stroke-width="4"/><ellipse cx="100" cy="110" rx="45" ry="55" fill="hsl(${colorHue}, 75%, 55%)" stroke="#000" stroke-width="5"/><circle cx="80" cy="80" r="20" fill="#FFF" stroke="#000" stroke-width="4"/><circle cx="120" cy="80" r="20" fill="#FFF" stroke="#000" stroke-width="4"/><circle cx="80" cy="80" r="8" fill="#000"/><circle cx="120" cy="80" r="8" fill="#000"/><polygon points="100,88 92,105 108,105" fill="#E9C46A" stroke="#000" stroke-width="3"/>`;
+        } else if (variant === 4) {
+          svgContent = `<ellipse cx="75" cy="35" rx="12" ry="35" fill="hsl(${colorHue}, 80%, 75%)" stroke="#000" stroke-width="4"/><ellipse cx="125" cy="35" rx="12" ry="35" fill="hsl(${colorHue}, 80%, 75%)" stroke="#000" stroke-width="4"/><ellipse cx="75" cy="35" rx="6" ry="25" fill="#FF66C4"/><ellipse cx="125" cy="35" rx="6" ry="25" fill="#FF66C4"/><circle cx="100" cy="130" r="42" fill="#FFF" stroke="#000" stroke-width="5"/><circle cx="100" cy="85" r="32" fill="#FFF" stroke="#000" stroke-width="5"/><circle cx="88" cy="80" r="5" fill="#000"/><circle cx="112" cy="80" r="5" fill="#000"/><ellipse cx="100" cy="90" rx="4" ry="3" fill="#FF66C4"/>`;
+        } else if (variant === 5) {
+          svgContent = `<circle cx="70" cy="50" r="18" fill="#52B788" stroke="#000" stroke-width="4"/><circle cx="130" cy="50" r="18" fill="#52B788" stroke="#000" stroke-width="4"/><circle cx="70" cy="50" r="8" fill="#FFF"/><circle cx="130" cy="50" r="8" fill="#FFF"/><circle cx="70" cy="50" r="4" fill="#000"/><circle cx="130" cy="50" r="4" fill="#000"/><ellipse cx="100" cy="115" rx="55" ry="45" fill="hsl(${colorHue}, 60%, 50%)" stroke="#000" stroke-width="5"/><path d="M 70 85 Q 100 110 130 85" fill="none" stroke="#000" stroke-width="4"/>`;
+        } else if (variant === 6) {
+          svgContent = `<ellipse cx="100" cy="120" rx="55" ry="42" fill="hsl(${colorHue}, 80%, 70%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="70" r="36" fill="hsl(${colorHue}, 80%, 70%)" stroke="#000" stroke-width="5"/><circle cx="55" cy="70" r="22" fill="#48CAE4" stroke="#000" stroke-width="4"/><circle cx="145" cy="70" r="22" fill="#48CAE4" stroke="#000" stroke-width="4"/><circle cx="88" cy="65" r="5" fill="#000"/><circle cx="112" cy="65" r="5" fill="#000"/><path d="M 100 75 Q 100 115 120 110" fill="none" stroke="#000" stroke-width="8" stroke-linecap="round"/>`;
+        } else {
+          svgContent = `<polygon points="40,30 75,65 30,75" fill="hsl(${colorHue}, 85%, 50%)" stroke="#000" stroke-width="4"/><polygon points="160,30 125,65 170,75" fill="hsl(${colorHue}, 85%, 50%)" stroke="#000" stroke-width="4"/><ellipse cx="100" cy="125" rx="45" ry="40" fill="hsl(${colorHue}, 85%, 50%)" stroke="#000" stroke-width="5"/><path d="M 65 70 Q 100 115 135 70 Z" fill="#FFF" stroke="#000" stroke-width="4"/><circle cx="82" cy="68" r="5" fill="#000"/><circle cx="118" cy="68" r="5" fill="#000"/><circle cx="100" cy="90" r="6" fill="#000"/>`;
+        }
+      } else if (cat === 'tool') {
+        const variant = i % 8;
+        const colorHue = (i * 20) % 360;
+        if (variant === 0) {
+          svgContent = `<rect x="90" y="70" width="20" height="105" rx="5" fill="#8D6E63" stroke="#000" stroke-width="4"/><rect x="50" y="35" width="100" height="40" rx="8" fill="hsl(${colorHue}, 20%, 60%)" stroke="#000" stroke-width="5"/><rect x="135" y="42" width="20" height="26" fill="#455A64" stroke="#000" stroke-width="3"/>`;
+        } else if (variant === 1) {
+          svgContent = `<path d="M 40 80 L 160 50 L 150 110 L 40 100 Z" fill="hsl(${colorHue}, 30%, 75%)" stroke="#000" stroke-width="5"/><path d="M 40 100 L 150 110 L 145 118 L 135 110 L 125 118 L 115 110 L 105 118 L 95 110 L 85 118 L 75 110 L 65 118 L 55 110 Z" fill="#90A4AE" stroke="#000" stroke-width="2"/><path d="M 25 65 C 15 80 15 110 30 120 C 45 125 55 115 50 95 Z" fill="#D32F2F" stroke="#000" stroke-width="4"/>`;
+        } else if (variant === 2) {
+          svgContent = `<path d="M 70 30 C 45 30 40 60 65 75 L 120 155 C 130 170 150 160 145 145 L 90 65 C 100 50 90 30 70 30 Z" fill="hsl(${colorHue}, 15%, 70%)" stroke="#000" stroke-width="5"/><circle cx="68" cy="48" r="10" fill="#ECEFF1"/>`;
+        } else if (variant === 3) {
+          svgContent = `<rect x="92" y="25" width="16" height="90" fill="#90A4AE" stroke="#000" stroke-width="4"/><polygon points="92,25 100,10 108,25" fill="#607D8B" stroke="#000" stroke-width="3"/><path d="M 80 110 L 120 110 L 115 180 L 85 180 Z" fill="hsl(${colorHue}, 80%, 45%)" stroke="#000" stroke-width="5"/><line x1="100" y1="115" x2="100" y2="175" stroke="#000" stroke-width="3"/>`;
+        } else if (variant === 4) {
+          svgContent = `<rect x="90" y="60" width="20" height="120" rx="6" fill="#6D4C41" stroke="#000" stroke-width="4"/><path d="M 100 40 Q 160 20 155 90 Q 110 80 100 70 Z" fill="hsl(${colorHue}, 25%, 55%)" stroke="#000" stroke-width="5"/><path d="M 145 32 Q 160 55 150 82" stroke="#FFF" stroke-width="4" fill="none"/>`;
+        } else if (variant === 5) {
+          svgContent = `<circle cx="65" cy="155" r="22" fill="hsl(${colorHue}, 80%, 55%)" stroke="#000" stroke-width="5"/><circle cx="135" cy="155" r="22" fill="hsl(${colorHue}, 80%, 55%)" stroke="#000" stroke-width="5"/><circle cx="65" cy="155" r="10" fill="#FFF"/><circle cx="135" cy="155" r="10" fill="#FFF"/><path d="M 75 140 L 130 30 L 115 25 L 65 135 Z" fill="#B0BEC5" stroke="#000" stroke-width="4"/><path d="M 125 140 L 70 30 L 85 25 L 135 135 Z" fill="#CFD8DC" stroke="#000" stroke-width="4"/><circle cx="100" cy="100" r="5" fill="#000"/>`;
+        } else if (variant === 6) {
+          svgContent = `<path d="M 70 120 L 50 180 L 70 180 L 85 130 Z" fill="hsl(${colorHue}, 70%, 45%)" stroke="#000" stroke-width="4"/><path d="M 130 120 L 150 180 L 130 180 L 115 130 Z" fill="hsl(${colorHue}, 70%, 45%)" stroke="#000" stroke-width="4"/><path d="M 85 120 L 70 30 L 90 20 L 100 110 Z" fill="#78909C" stroke="#000" stroke-width="4"/><path d="M 115 120 L 130 30 L 110 20 L 100 110 Z" fill="#90A4AE" stroke="#000" stroke-width="4"/><circle cx="100" cy="115" r="8" fill="#37474F" stroke="#000" stroke-width="2"/>`;
+        } else {
+          svgContent = `<rect x="92" y="70" width="16" height="115" rx="5" transform="rotate(-15 100 125)" fill="#5D4037" stroke="#000" stroke-width="4"/><path d="M 30 70 Q 100 20 170 70 Q 100 50 30 70 Z" fill="hsl(${colorHue}, 30%, 45%)" stroke="#000" stroke-width="5"/>`;
+        }
+      } else if (cat === 'monster') {
+        const variant = i % 8;
+        const colorHue = (i * 35) % 360;
+        if (variant === 0) {
+          svgContent = `<ellipse cx="100" cy="120" rx="65" ry="50" fill="hsl(${colorHue}, 85%, 55%)" stroke="#000" stroke-width="5"/><circle cx="75" cy="100" r="12" fill="#FFF" stroke="#000" stroke-width="3"/><circle cx="100" cy="90" r="15" fill="#FFF" stroke="#000" stroke-width="3"/><circle cx="125" cy="100" r="12" fill="#FFF" stroke="#000" stroke-width="3"/><circle cx="75" cy="100" r="5" fill="#000"/><circle cx="100" cy="90" r="6" fill="#000"/><circle cx="125" cy="100" r="5" fill="#000"/><path d="M 75 135 Q 100 160 125 135 Z" fill="#000"/>`;
+        } else if (variant === 1) {
+          svgContent = `<polygon points="100,15 125,50 165,40 145,85 180,120 135,135 120,175 80,175 65,135 20,120 55,85 35,40 75,50" fill="hsl(${colorHue}, 90%, 50%)" stroke="#000" stroke-width="5"/><circle cx="80" cy="90" r="10" fill="#FFD166" stroke="#000" stroke-width="3"/><circle cx="120" cy="90" r="10" fill="#FFD166" stroke="#000" stroke-width="3"/><circle cx="80" cy="90" r="4" fill="#000"/><circle cx="120" cy="90" r="4" fill="#000"/><path d="M 80 125 L 90 115 L 100 125 L 110 115 L 120 125" fill="none" stroke="#000" stroke-width="4"/>`;
+        } else if (variant === 2) {
+          svgContent = `<path d="M 40 160 Q 20 100 60 70 Q 100 30 140 70 Q 180 100 160 160 Q 100 180 40 160 Z" fill="hsl(${colorHue}, 75%, 55%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="85" r="18" fill="#FFF" stroke="#000" stroke-width="4"/><circle cx="100" cy="85" r="8" fill="#E91E63"/>`;
+        } else if (variant === 3) {
+          svgContent = `<path d="M 85 170 C 85 110 60 90 60 50" fill="none" stroke="hsl(${colorHue}, 80%, 55%)" stroke-width="16"/><circle cx="60" cy="40" r="20" fill="#FFF" stroke="#000" stroke-width="4"/><circle cx="60" cy="40" r="8" fill="#000"/><path d="M 115 170 C 115 110 140 90 140 60" fill="none" stroke="hsl(${colorHue}, 80%, 55%)" stroke-width="16"/><circle cx="140" cy="50" r="16" fill="#FFF" stroke="#000" stroke-width="4"/><circle cx="140" cy="50" r="6" fill="#000"/><ellipse cx="100" cy="160" rx="45" ry="20" fill="#689F38" stroke="#000" stroke-width="4"/>`;
+        } else if (variant === 4) {
+          svgContent = `<rect x="55" y="50" width="90" height="110" rx="15" fill="hsl(${colorHue}, 30%, 40%)" stroke="#000" stroke-width="5"/><polygon points="100,10 120,50 80,50" fill="#CFD8DC" stroke="#000" stroke-width="4"/><rect x="70" y="70" width="60" height="18" fill="#FF1744" stroke="#000" stroke-width="3"/><path d="M 70 125 L 130 125" stroke="#000" stroke-width="5"/>`;
+        } else if (variant === 5) {
+          svgContent = `<path d="M 30 90 Q 100 10 170 90 Z" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="5"/><circle cx="70" cy="55" r="10" fill="#FFF"/><circle cx="130" cy="55" r="12" fill="#FFF"/><rect x="75" y="90" width="50" height="70" rx="20" fill="#FFF8E1" stroke="#000" stroke-width="5"/><circle cx="88" cy="115" r="4" fill="#000"/><circle cx="112" cy="115" r="4" fill="#000"/>`;
+        } else if (variant === 6) {
+          svgContent = `<path d="M 100 20 Q 150 70 140 130 Q 120 180 100 150 Q 80 180 60 130 Q 50 70 100 20 Z" fill="hsl(${colorHue}, 90%, 60%)" stroke="#000" stroke-width="5"/><circle cx="85" cy="85" r="6" fill="#000"/><circle cx="115" cy="85" r="6" fill="#000"/><ellipse cx="100" cy="110" rx="12" ry="8" fill="#000"/>`;
+        } else {
+          svgContent = `<polygon points="100,30 145,140 55,140" fill="hsl(${colorHue}, 85%, 50%)" stroke="#000" stroke-width="5"/><circle cx="85" cy="80" r="7" fill="#000"/><circle cx="115" cy="80" r="7" fill="#000"/><path d="M 80 115 L 120 115" stroke="#000" stroke-width="4"/>`;
+        }
+      } else if (cat === 'vehicle') {
+        const variant = i % 8;
+        const colorHue = (i * 28) % 360;
+        if (variant === 0) {
+          svgContent = `<rect x="15" y="65" width="170" height="75" rx="12" fill="hsl(${colorHue}, 90%, 55%)" stroke="#000" stroke-width="5"/><rect x="30" y="78" width="25" height="22" rx="4" fill="#8ECAE6" stroke="#000" stroke-width="3"/><rect x="65" y="78" width="25" height="22" rx="4" fill="#8ECAE6" stroke="#000" stroke-width="3"/><rect x="100" y="78" width="25" height="22" rx="4" fill="#8ECAE6" stroke="#000" stroke-width="3"/><rect x="135" y="78" width="25" height="22" rx="4" fill="#8ECAE6" stroke="#000" stroke-width="3"/><circle cx="45" cy="140" r="16" fill="#222" stroke="#000" stroke-width="4"/><circle cx="155" cy="140" r="16" fill="#222" stroke="#000" stroke-width="4"/>`;
+        } else if (variant === 1) {
+          svgContent = `<path d="M 10 120 Q 30 85 75 80 L 130 80 Q 175 85 190 120 Z" fill="hsl(${colorHue}, 85%, 50%)" stroke="#000" stroke-width="5"/><path d="M 60 80 Q 90 50 125 80 Z" fill="#000" opacity="0.7"/><circle cx="45" cy="125" r="15" fill="#333" stroke="#FFF" stroke-width="3"/><circle cx="155" cy="125" r="15" fill="#333" stroke="#FFF" stroke-width="3"/>`;
+        } else if (variant === 2) {
+          svgContent = `<ellipse cx="100" cy="85" rx="35" ry="30" fill="#4CC9F0" stroke="#000" stroke-width="4"/><ellipse cx="100" cy="110" rx="80" ry="22" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="5"/><circle cx="45" cy="115" r="6" fill="#FFD166"/><circle cx="80" cy="120" r="6" fill="#FF007F"/><circle cx="120" cy="120" r="6" fill="#06D6A0"/><circle cx="155" cy="115" r="6" fill="#FFD166"/>`;
+        } else if (variant === 3) {
+          svgContent = `<path d="M 100 15 Q 135 60 125 150 L 75 150 Q 65 60 100 15 Z" fill="#F8F9FA" stroke="#000" stroke-width="5"/><circle cx="100" cy="80" r="16" fill="hsl(${colorHue}, 85%, 50%)" stroke="#000" stroke-width="4"/><path d="M 75 120 L 35 165 L 75 150 Z" fill="#EF476F" stroke="#000" stroke-width="3"/><path d="M 125 120 L 165 165 L 125 150 Z" fill="#EF476F" stroke="#000" stroke-width="3"/>`;
+        } else if (variant === 4) {
+          svgContent = `<rect x="60" y="100" width="75" height="35" rx="10" fill="hsl(${colorHue}, 75%, 50%)" stroke="#000" stroke-width="4"/><circle cx="50" cy="135" r="18" fill="#333" stroke="#000" stroke-width="4"/><circle cx="145" cy="135" r="18" fill="#333" stroke="#000" stroke-width="4"/><path d="M 130 100 L 120 50 L 100 50" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round"/><circle cx="120" cy="45" r="10" fill="#FFD166" stroke="#000" stroke-width="3"/>`;
+        } else if (variant === 5) {
+          svgContent = `<rect x="25" y="80" width="140" height="60" rx="30" fill="hsl(${colorHue}, 90%, 55%)" stroke="#000" stroke-width="5"/><rect x="85" y="45" width="20" height="40" fill="hsl(${colorHue}, 90%, 55%)" stroke="#000" stroke-width="4"/><circle cx="60" cy="110" r="10" fill="#E0F2FE" stroke="#000" stroke-width="3"/><circle cx="100" cy="110" r="10" fill="#E0F2FE" stroke="#000" stroke-width="3"/><circle cx="140" cy="110" r="10" fill="#E0F2FE" stroke="#000" stroke-width="3"/>`;
+        } else if (variant === 6) {
+          svgContent = `<rect x="45" y="55" width="110" height="50" rx="10" fill="hsl(${colorHue}, 80%, 45%)" stroke="#000" stroke-width="5"/><circle cx="45" cy="130" r="28" fill="#111" stroke="#000" stroke-width="6"/><circle cx="155" cy="130" r="28" fill="#111" stroke="#000" stroke-width="6"/><circle cx="45" cy="130" r="10" fill="#FFD166"/><circle cx="155" cy="130" r="10" fill="#FFD166"/>`;
+        } else {
+          svgContent = `<rect x="25" y="70" width="100" height="60" fill="hsl(${colorHue}, 75%, 40%)" stroke="#000" stroke-width="5"/><rect x="115" y="40" width="55" height="90" fill="#C77DFF" stroke="#000" stroke-width="5"/><rect x="40" y="35" width="20" height="35" fill="#E71D36" stroke="#000" stroke-width="3"/><circle cx="45" cy="140" r="14" fill="#222" stroke="#000" stroke-width="3"/><circle cx="85" cy="140" r="14" fill="#222" stroke="#000" stroke-width="3"/><circle cx="135" cy="140" r="16" fill="#222" stroke="#000" stroke-width="4"/>`;
+        }
+      } else if (cat === 'castle') {
+        const variant = i % 8;
+        const colorHue = (i * 32) % 360;
+        if (variant === 0) {
+          svgContent = `<rect x="20" y="80" width="160" height="85" fill="hsl(${colorHue}, 15%, 60%)" stroke="#000" stroke-width="5"/><rect x="15" y="55" width="35" height="30" fill="#757575" stroke="#000" stroke-width="4"/><rect x="150" y="55" width="35" height="30" fill="#757575" stroke="#000" stroke-width="4"/><path d="M 80 165 L 80 115 Q 100 95 120 115 L 120 165 Z" fill="#3E2723" stroke="#000" stroke-width="4"/>`;
+        } else if (variant === 1) {
+          svgContent = `<rect x="75" y="60" width="50" height="110" fill="hsl(${colorHue}, 50%, 55%)" stroke="#000" stroke-width="5"/><path d="M 55 60 L 100 10 L 145 60 Z" fill="#3949AB" stroke="#000" stroke-width="5"/><circle cx="100" cy="38" r="8" fill="#FFD166"/><rect x="90" y="115" width="20" height="55" fill="#1A237E" stroke="#000" stroke-width="3"/>`;
+        } else if (variant === 2) {
+          svgContent = `<rect x="60" y="60" width="80" height="105" fill="hsl(${colorHue}, 65%, 50%)" stroke="#000" stroke-width="5"/><path d="M 35 65 Q 100 45 165 65 L 150 50 Q 100 35 50 50 Z" fill="#FFB300" stroke="#000" stroke-width="3"/><path d="M 25 105 Q 100 85 175 105 L 160 90 Q 100 75 40 90 Z" fill="#FFB300" stroke="#000" stroke-width="3"/>`;
+        } else if (variant === 3) {
+          svgContent = `<path d="M 40 130 Q 100 175 160 130 L 140 100 L 60 100 Z" fill="#795548" stroke="#000" stroke-width="5"/><rect x="65" y="50" width="70" height="50" fill="hsl(${colorHue}, 70%, 85%)" stroke="#000" stroke-width="4"/><polygon points="100,15 140,50 60,50" fill="#00ACC1" stroke="#000" stroke-width="4"/>`;
+        } else if (variant === 4) {
+          svgContent = `<polygon points="100,20 150,75 135,165 65,165 50,75" fill="hsl(${colorHue}, 80%, 60%)" stroke="#000" stroke-width="5"/><polygon points="100,20 120,80 100,165" fill="#FFF" opacity="0.4"/>`;
+        } else if (variant === 5) {
+          svgContent = `<polygon points="30,170 60,70 100,100 140,70 170,170" fill="hsl(${colorHue}, 20%, 25%)" stroke="#000" stroke-width="5"/><path d="M 60 70 Q 100 30 140 70" stroke="#FF3D00" stroke-width="6" fill="none"/>`;
+        } else if (variant === 6) {
+          svgContent = `<rect x="70" y="40" width="60" height="130" fill="hsl(${colorHue}, 35%, 45%)" stroke="#000" stroke-width="5"/><polygon points="100,10 135,40 65,40" fill="#4E342E" stroke="#000" stroke-width="4"/><circle cx="100" cy="70" r="18" fill="#FFF" stroke="#000" stroke-width="3"/><line x1="100" y1="70" x2="100" y2="58" stroke="#000" stroke-width="3"/><line x1="100" y1="70" x2="108" y2="70" stroke="#000" stroke-width="3"/>`;
+        } else {
+          svgContent = `<rect x="35" y="70" width="130" height="95" rx="15" fill="hsl(${colorHue}, 25%, 75%)" stroke="#000" stroke-width="5"/><circle cx="60" cy="95" r="12" fill="#FF1744"/><circle cx="100" cy="95" r="12" fill="#00E676"/><circle cx="140" cy="95" r="12" fill="#FFEA00"/><rect x="85" y="120" width="30" height="45" fill="#5D4037" stroke="#000" stroke-width="3"/>`;
+        }
+      } else if (cat === 'tree') {
+        const variant = i % 8;
+        const colorHue = (i * 22 + 100) % 360;
+        if (variant === 0) {
+          svgContent = `<rect x="86" y="115" width="28" height="55" fill="#6D4C41" stroke="#000" stroke-width="4"/><circle cx="100" cy="75" r="50" fill="hsl(${colorHue}, 65%, 40%)" stroke="#000" stroke-width="5"/>`;
+        } else if (variant === 1) {
+          svgContent = `<path d="M 85 170 Q 115 110 95 45" fill="none" stroke="#8D6E63" stroke-width="16" stroke-linecap="round"/><path d="M 95 45 Q 35 20 15 50" fill="none" stroke="hsl(${colorHue}, 70%, 45%)" stroke-width="12" stroke-linecap="round"/><path d="M 95 45 Q 165 20 185 50" fill="none" stroke="hsl(${colorHue}, 70%, 45%)" stroke-width="12" stroke-linecap="round"/><path d="M 95 45 Q 100 -10 110 30" fill="none" stroke="hsl(${colorHue}, 70%, 45%)" stroke-width="10" stroke-linecap="round"/>`;
+        } else if (variant === 2) {
+          svgContent = `<polygon points="100,15 145,70 125,70 155,120 135,120 165,160 35,160 65,120 45,120 75,70 55,70" fill="hsl(${colorHue}, 75%, 30%)" stroke="#000" stroke-width="5"/><rect x="88" y="160" width="24" height="20" fill="#4E342E" stroke="#000" stroke-width="3"/>`;
+        } else if (variant === 3) {
+          svgContent = `<rect x="85" y="30" width="30" height="140" rx="15" fill="hsl(${colorHue}, 80%, 45%)" stroke="#000" stroke-width="5"/><path d="M 40 80 L 85 80 L 85 100 L 40 100 L 40 50" fill="hsl(${colorHue}, 80%, 45%)" stroke="#000" stroke-width="4"/><path d="M 160 90 L 115 90 L 115 110 L 160 110 L 160 60" fill="hsl(${colorHue}, 80%, 45%)" stroke="#000" stroke-width="4"/>`;
+        } else if (variant === 4) {
+          svgContent = `<path d="M 75 110 Q 70 165 100 165 Q 130 165 125 110 Z" fill="#FFF9C4" stroke="#000" stroke-width="4"/><path d="M 20 115 Q 100 15 180 115 Z" fill="hsl(${colorHue}, 85%, 50%)" stroke="#000" stroke-width="5"/><circle cx="60" cy="70" r="12" fill="#FFF"/><circle cx="140" cy="65" r="14" fill="#FFF"/>`;
+        } else if (variant === 5) {
+          svgContent = `<polygon points="100,15 140,80 120,165 80,165 60,80" fill="hsl(${colorHue}, 90%, 60%)" stroke="#000" stroke-width="5"/><line x1="100" y1="15" x2="100" y2="165" stroke="#FFF" stroke-width="4"/>`;
+        } else if (variant === 6) {
+          svgContent = `<path d="M 60 160 Q 130 130 90 90 Q 120 60 110 40" fill="none" stroke="#5D4037" stroke-width="18" stroke-linecap="round"/><circle cx="110" cy="35" r="28" fill="hsl(${colorHue}, 70%, 45%)" stroke="#000" stroke-width="4"/><circle cx="70" cy="85" r="22" fill="hsl(${colorHue}, 70%, 45%)" stroke="#000" stroke-width="4"/>`;
+        } else {
+          svgContent = `<rect x="88" y="110" width="24" height="60" fill="#4E342E" stroke="#000" stroke-width="4"/><circle cx="80" cy="70" r="35" fill="hsl(${colorHue}, 80%, 75%)" opacity="0.9" stroke="#000" stroke-width="4"/><circle cx="120" cy="70" r="35" fill="hsl(${colorHue}, 80%, 75%)" opacity="0.9" stroke="#000" stroke-width="4"/><circle cx="100" cy="50" r="35" fill="hsl(${colorHue}, 90%, 70%)" stroke="#000" stroke-width="4"/>`;
+        }
+      } else if (cat === 'accessories') {
+        const variant = i % 8;
+        const colorHue = (i * 33) % 360;
+        if (variant === 0) {
+          svgContent = `<path d="M 30 135 L 45 50 L 75 95 L 100 30 L 125 95 L 155 50 L 170 135 Z" fill="hsl(${colorHue}, 90%, 55%)" stroke="#000" stroke-width="5"/><rect x="30" y="130" width="140" height="22" rx="4" fill="#E71D36" stroke="#000" stroke-width="3"/><circle cx="100" cy="70" r="8" fill="#4CC9F0"/>`;
+        } else if (variant === 1) {
+          svgContent = `<rect x="92" y="65" width="16" height="115" rx="8" fill="#795548" stroke="#000" stroke-width="4"/><circle cx="100" cy="45" r="24" fill="hsl(${colorHue}, 75%, 60%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="45" r="10" fill="#FFF"/>`;
+        } else if (variant === 2) {
+          svgContent = `<path d="M 40 45 L 160 45 L 160 100 Q 160 165 100 185 Q 40 165 40 100 Z" fill="hsl(${colorHue}, 80%, 45%)" stroke="#000" stroke-width="5"/><path d="M 100 45 L 100 185" stroke="#FFD166" stroke-width="6"/><circle cx="100" cy="105" r="22" fill="#FFD166" stroke="#000" stroke-width="3"/>`;
+        } else if (variant === 3) {
+          svgContent = `<path d="M 100 100 Q 30 20 10 90 Q 50 140 100 110 Z" fill="hsl(${colorHue}, 70%, 90%)" stroke="#000" stroke-width="4"/><path d="M 100 100 Q 170 20 190 90 Q 150 140 100 110 Z" fill="hsl(${colorHue}, 70%, 90%)" stroke="#000" stroke-width="4"/>`;
+        } else if (variant === 4) {
+          svgContent = `<rect x="40" y="60" width="45" height="90" rx="15" fill="hsl(${colorHue}, 20%, 70%)" stroke="#000" stroke-width="4"/><rect x="115" y="60" width="45" height="90" rx="15" fill="hsl(${colorHue}, 20%, 70%)" stroke="#000" stroke-width="4"/><path d="M 50 150 L 62 180 L 75 150 Z" fill="#FF5722"/><path d="M 125 150 L 137 180 L 150 150 Z" fill="#FF5722"/>`;
+        } else if (variant === 5) {
+          svgContent = `<path d="M 60 160 Q 140 140 165 40 Q 130 70 50 140 Z" fill="hsl(${colorHue}, 25%, 80%)" stroke="#000" stroke-width="4"/><circle cx="50" cy="150" r="16" fill="#FFD166" stroke="#000" stroke-width="3"/>`;
+        } else if (variant === 6) {
+          svgContent = `<circle cx="65" cy="100" r="30" fill="#795548" stroke="#000" stroke-width="5"/><circle cx="135" cy="100" r="30" fill="#795548" stroke="#000" stroke-width="5"/><circle cx="65" cy="100" r="20" fill="hsl(${colorHue}, 90%, 60%)" stroke="#000" stroke-width="3"/><circle cx="135" cy="100" r="20" fill="hsl(${colorHue}, 90%, 60%)" stroke="#000" stroke-width="3"/><line x1="95" y1="100" x2="105" y2="100" stroke="#000" stroke-width="6"/>`;
+        } else {
+          svgContent = `<rect x="35" y="85" width="130" height="70" fill="hsl(${colorHue}, 40%, 45%)" stroke="#000" stroke-width="5"/><path d="M 35 85 Q 100 45 165 85 Z" fill="#6D4C41" stroke="#000" stroke-width="5"/><rect x="90" y="90" width="20" height="25" fill="#FFD166" stroke="#000" stroke-width="3"/>`;
+        }
+      } else if (cat === 'backgrounds') {
+        const bgType = i % 40;
+        const colorHue = (i * 9) % 360;
+
+        if (bgType === 0) {
+          svgContent = `<rect width="200" height="200" fill="#0B091A"/><circle cx="40" cy="40" r="2" fill="#FFF"/><circle cx="160" cy="30" r="3" fill="#FFD166"/><circle cx="120" cy="120" r="1.5" fill="#FFF"/><circle cx="150" cy="150" r="22" fill="#7209B7" opacity="0.6"/><ellipse cx="150" cy="150" rx="35" ry="8" fill="none" stroke="#4CC9F0" stroke-width="3" transform="rotate(-20 150 150)"/>`;
+        } else if (bgType === 1) {
+          svgContent = `<rect width="200" height="200" fill="#0077B6"/><path d="M 0 160 Q 50 130 100 160 T 200 160 L 200 200 L 0 200 Z" fill="#0096C7"/><path d="M 30 200 Q 20 140 40 110" fill="none" stroke="#06D6A0" stroke-width="10" stroke-linecap="round"/><path d="M 160 200 Q 180 130 150 100" fill="none" stroke="#FF70A6" stroke-width="12" stroke-linecap="round"/><circle cx="80" cy="60" r="6" fill="none" stroke="#FFF" opacity="0.6"/><circle cx="85" cy="40" r="4" fill="none" stroke="#FFF" opacity="0.6"/>`;
+        } else if (bgType === 2) {
+          svgContent = `<rect width="200" height="200" fill="#132A13"/><path d="M 0 120 Q 100 90 200 120 L 200 200 L 0 200 Z" fill="#31572C"/><circle cx="40" cy="100" r="45" fill="#4F772D"/><circle cx="160" cy="90" r="55" fill="#4F772D"/><circle cx="90" cy="140" r="4" fill="#FFD166" opacity="0.9"/><circle cx="130" cy="120" r="3" fill="#FFD166" opacity="0.9"/>`;
+        } else if (bgType === 3) {
+          svgContent = `<rect width="200" height="200" fill="#386641"/><path d="M -20 50 Q 40 10 80 80" fill="none" stroke="#6A994E" stroke-width="20"/><path d="M 120 30 Q 160 100 220 40" fill="none" stroke="#6A994E" stroke-width="24"/><path d="M 0 150 Q 100 130 200 150 L 200 200 L 0 200 Z" fill="#152814"/>`;
+        } else if (bgType === 4) {
+          svgContent = `<rect width="200" height="200" fill="#0D0221"/><rect x="20" y="60" width="40" height="140" fill="#0F084B"/><rect x="75" y="30" width="50" height="170" fill="#26408B"/><rect x="140" y="80" width="45" height="120" fill="#0F084B"/><line x1="0" y1="160" x2="200" y2="160" stroke="#FF007F" stroke-width="4"/><line x1="20" y1="80" x2="60" y2="80" stroke="#00F5D4" stroke-width="3"/>`;
+        } else {
+          // Dynamic vivid color backgrounds for 5 through 39
+          svgContent = `<rect width="200" height="200" fill="hsl(${colorHue}, 60%, 25%)"/><circle cx="100" cy="70" r="45" fill="hsl(${(colorHue+40)%360}, 75%, 65%)" opacity="0.8"/><path d="M 0 140 Q 100 110 200 140 L 200 200 L 0 200 Z" fill="hsl(${(colorHue+120)%360}, 70%, 40%)"/><line x1="0" y1="140" x2="200" y2="140" stroke="#FFF" stroke-width="3" opacity="0.5"/>`;
+        }
+      }
+
+      const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">${svgContent}</svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svgString);
+    }
+
+    // Render skins UI grid
+    function renderSkinsGrid(filterText = '') {
+      const container = document.getElementById('skins-grid');
+      container.innerHTML = '';
+
+      let matchCount = 0;
+      const count = ITEM_NAMES[activeCategory].length;
+
+      for (let i = 0; i <= count; i++) {
+        const skinName = i === 0 ? (activeCategory === 'backgrounds' ? 'Blank Custom World' : 'Blank Canvas') : ITEM_NAMES[activeCategory][i - 1];
+        
+        if (filterText && !skinName.toLowerCase().includes(filterText.toLowerCase()) && !String(i).includes(filterText)) {
+          continue;
+        }
+
+        matchCount++;
+        const card = document.createElement('div');
+        const isSelected = currentSkinIndex === i;
+
+        card.className = `skin-card cursor-pointer rounded-xl p-1.5 flex flex-col items-center justify-between border-2 ${isSelected ? 'bg-purple-100 border-purple-600 ring-2 ring-purple-400' : 'bg-white border-slate-200 hover:border-purple-300'} shadow-sm`;
+        
+        if (i === 0) {
+          card.innerHTML = `
+            <div class="w-full h-14 rounded-lg bg-slate-50 border-2 border-dashed border-purple-400 flex items-center justify-center text-xl text-purple-600">
+              ${activeCategory === 'backgrounds' ? '🏞️' : '✏️'}
+            </div>
+            <span class="text-[10px] font-extrabold text-slate-800 mt-1 text-center leading-tight">${skinName}</span>
+          `;
+        } else {
+          const svgUrl = generateSkinSVG(activeCategory, i);
+          card.innerHTML = `
+            <div class="w-full h-14 rounded-lg bg-slate-50 p-1 flex items-center justify-center overflow-hidden">
+              <img src="${svgUrl}" class="max-h-full max-w-full object-contain pointer-events-none" alt="${skinName}">
+            </div>
+            <span class="text-[9px] font-extrabold text-slate-700 mt-1 text-center truncate w-full">${skinName}</span>
+          `;
+        }
+
+        card.onclick = () => selectSkin(i);
+        container.appendChild(card);
+      }
+
+      document.getElementById('skin-count-indicator').innerText = `${matchCount} Skins`;
+    }
+
+    function filterSkins() {
+      const text = document.getElementById('skin-search').value;
+      renderSkinsGrid(text);
+    }
+
+    function selectSkin(index) {
+      playSound(activeCategory);
+      currentSkinIndex = index;
+      renderSkinsGrid(document.getElementById('skin-search').value);
+
+      const activeLabel = document.getElementById('active-skin-title');
+
+      if (index === 0) {
+        if (activeCategory === 'backgrounds') {
+          activeLabel.innerText = '🏞️ Blank Custom World - Draw Your Own Sky/Land!';
+          currentWorldBackground = -1; // Flag for drawing custom background
+        } else {
+          activeLabel.innerText = '🎨 Blank Canvas (Clean Start)';
+          clearCanvas();
+        }
+      } else {
+        const name = ITEM_NAMES[activeCategory][index - 1] || `Item #${index}`;
+        if (activeCategory === 'backgrounds') {
+          activeLabel.innerText = `🏞️ World: ${name} Selected!`;
+          currentWorldBackground = index;
+          customBackgroundDataUrl = null;
+        } else {
+          activeLabel.innerText = `✨ ${name} Loaded - Draw & Customize!`;
+          loadSkinToCanvas(activeCategory, index);
+        }
+      }
+    }
+
+    function loadSkinToCanvas(cat, index) {
+      const svgUrl = generateSkinSVG(cat, index);
+      const img = new Image();
+      img.onload = () => {
+        studioCtx.clearRect(0, 0, studioCanvas.width, studioCanvas.height);
+        const padding = 30;
+        const size = studioCanvas.width - (padding * 2);
+        studioCtx.drawImage(img, padding, padding, size, size);
+      };
+      img.src = svgUrl;
+    }
+
+    /* --------------------------------------------------
+     * 3. STUDIO CANVAS DRAWING LOGIC
+     * -------------------------------------------------- */
+    const studioCanvas = document.getElementById('studio-canvas');
+    const studioCtx = studioCanvas.getContext('2d');
+    let isDrawing = false;
+    let currentTool = 'pen';
+    let brushColor = '#FF6B6B';
+    let isRainbow = false;
+    let rainbowHue = 0;
+    let brushSize = 10;
+
+    const paletteColors = [
+      '#FF6B6B', '#FFD166', '#06D6A0', '#4ECDC4', '#118AB2', 
+      '#A06CD5', '#FF9F1C', '#333333', '#FFFFFF'
+    ];
+
+    function initStudio() {
+      const palContainer = document.getElementById('color-palette');
+      palContainer.innerHTML = '';
+      paletteColors.forEach((col, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `w-5 h-5 md:w-6 md:h-6 rounded-lg border-2 ${idx === 0 ? 'border-black scale-110' : 'border-white'} transition-all candy-btn shrink-0`;
+        btn.style.backgroundColor = col;
+        btn.onclick = () => selectColor(col, btn);
+        palContainer.appendChild(btn);
+      });
+
+      studioCanvas.addEventListener('mousedown', startDrawing);
+      studioCanvas.addEventListener('mousemove', draw);
+      studioCanvas.addEventListener('mouseup', stopDrawing);
+      studioCanvas.addEventListener('mouseleave', stopDrawing);
+
+      studioCanvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousedown', { clientX: touch.clientX, clientY: touch.clientY });
+        studioCanvas.dispatchEvent(mouseEvent);
+      });
+      studioCanvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousemove', { clientX: touch.clientX, clientY: touch.clientY });
+        studioCanvas.dispatchEvent(mouseEvent);
+      });
+      studioCanvas.addEventListener('touchend', () => {
+        const mouseEvent = new MouseEvent('mouseup', {});
+        studioCanvas.dispatchEvent(mouseEvent);
+      });
+
+      renderSkinsGrid();
+      buildAnimationUI();
+    }
+
+    function resizeStudioCanvas() {
+      const container = document.getElementById('studio-canvas-container');
+      if (!container) return;
+
+      const size = Math.min(container.clientWidth - 20, container.clientHeight - 20, 520);
+      
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = studioCanvas.width;
+      tempCanvas.height = studioCanvas.height;
+      if (tempCanvas.width > 0) {
+        tempCanvas.getContext('2d').drawImage(studioCanvas, 0, 0);
+      }
+
+      studioCanvas.width = size;
+      studioCanvas.height = size;
+
+      if (tempCanvas.width > 0) {
+        studioCtx.drawImage(tempCanvas, 0, 0, size, size);
+      } else {
+        clearCanvas();
+      }
+    }
+
+    function selectColor(color, element) {
+      playSound('tap');
+      brushColor = color;
+      isRainbow = false;
+      document.getElementById('rainbow-brush-btn').classList.remove('ring-2', 'ring-yellow-300');
+      
+      const btns = document.querySelectorAll('#color-palette button');
+      btns.forEach(b => b.classList.remove('border-black', 'scale-110'));
+      if (element) element.classList.add('border-black', 'scale-110');
+      
+      if (currentTool === 'eraser') setTool('pen');
+    }
+
+    function toggleRainbowBrush() {
+      playSound('magic');
+      isRainbow = !isRainbow;
+      const btn = document.getElementById('rainbow-brush-btn');
+      if (isRainbow) {
+        btn.classList.add('ring-2', 'ring-yellow-300');
+        if (currentTool === 'eraser') setTool('pen');
+      } else {
+        btn.classList.remove('ring-2', 'ring-yellow-300');
+      }
+    }
+
+    function updateBrushSize(val) {
+      brushSize = val;
+      document.getElementById('brush-size-val').innerText = val;
+    }
+
+    function setTool(tool) {
+      playSound('tap');
+      currentTool = tool;
+      const penBtn = document.getElementById('tool-pen');
+      const eraserBtn = document.getElementById('tool-eraser');
+
+      if (tool === 'pen') {
+        penBtn.className = 'px-2 py-1 rounded-lg bg-purple-600 text-white font-bold text-xs';
+        eraserBtn.className = 'px-2 py-1 rounded-lg bg-slate-200 text-slate-700 font-bold text-xs';
+      } else {
+        eraserBtn.className = 'px-2 py-1 rounded-lg bg-purple-600 text-white font-bold text-xs';
+        penBtn.className = 'px-2 py-1 rounded-lg bg-slate-200 text-slate-700 font-bold text-xs';
+      }
+    }
+
+    function setCategory(cat) {
+      playSound(cat);
+      activeCategory = cat;
+      currentSkinIndex = 0;
+
+      CATEGORIES.forEach(c => {
+        const btn = document.getElementById(`cat-${c}`);
+        if (btn) {
+          if (c === cat) {
+            btn.className = 'cat-btn candy-btn bg-purple-600 text-white p-1.5 rounded-xl font-bold flex items-center justify-center gap-1 text-[10px] md:text-xs';
+          } else {
+            btn.className = 'cat-btn candy-btn bg-slate-100 text-slate-700 p-1.5 rounded-xl font-bold flex items-center justify-center gap-1 text-[10px] md:text-xs';
+          }
+        }
+      });
+
+      document.getElementById('skin-search').value = '';
+      selectSkin(0);
+    }
+
+    function getCanvasPos(e) {
+      const rect = studioCanvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (studioCanvas.width / rect.width),
+        y: (e.clientY - rect.top) * (studioCanvas.height / rect.height)
+      };
+    }
+
+    function startDrawing(e) {
+      initAudio();
+      isDrawing = true;
+      const pos = getCanvasPos(e);
+      studioCtx.beginPath();
+      studioCtx.moveTo(pos.x, pos.y);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const pos = getCanvasPos(e);
+
+      studioCtx.lineWidth = brushSize;
+      studioCtx.lineCap = 'round';
+      studioCtx.lineJoin = 'round';
+
+      if (currentTool === 'eraser') {
+        studioCtx.globalCompositeOperation = 'destination-out';
+        studioCtx.strokeStyle = 'rgba(0,0,0,1)';
+      } else {
+        studioCtx.globalCompositeOperation = 'source-over';
+        if (isRainbow) {
+          rainbowHue = (rainbowHue + 4) % 360;
+          studioCtx.strokeStyle = `hsl(${rainbowHue}, 90%, 60%)`;
+        } else {
+          studioCtx.strokeStyle = brushColor;
+        }
+      }
+
+      studioCtx.lineTo(pos.x, pos.y);
+      studioCtx.stroke();
+    }
+
+    function stopDrawing() {
+      if (isDrawing) {
+        studioCtx.closePath();
+        isDrawing = false;
+      }
+    }
+
+    function clearCanvas() {
+      playSound('pop');
+      studioCtx.clearRect(0, 0, studioCanvas.width, studioCanvas.height);
+    }
+
+    /* --------------------------------------------------
+     * 4. KINGDOM ACTOR & SPEECH BUBBLE ENGINE
+     * -------------------------------------------------- */
+    const worldCanvas = document.getElementById('world-canvas');
+    const worldCtx = worldCanvas.getContext('2d');
+    let worldObjects = [];
+    let selectedObject = null;
+    let draggedObject = null;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    let particles = [];
+
+    class KingdomActor {
+      constructor(imgData, category, x, y, speech = '') {
+        this.id = Date.now() + Math.random();
+        this.category = category;
+        this.x = x;
+        this.y = y;
+        this.baseSize = 120;
+        this.scale = 1.0;
+        this.imgData = imgData;
+        this.img = new Image();
+        this.img.src = imgData;
+
+        // Speech bubble state
+        this.speechText = speech;
+        this.speechTimer = speech ? 300 : 0; // Frames to display speech bubble
+
+        // Default to standing completely still
+        this.animation = 'idle';
+        
+        this.animTimer = Math.random() * 10;
+        this.bounceY = 0;
+        this.angle = 0;
+        this.scaleX = 1;
+        this.scaleY = 1;
+        this.facingRight = true;
+      }
+
+      update(width, height) {
+        this.animTimer += 0.08;
+
+        if (this.speechTimer > 0) {
+          this.speechTimer--;
+        }
+
+        let targetBounceY = 0;
+        let targetAngle = 0;
+        let targetScaleX = 1;
+        let targetScaleY = 1;
+
+        switch (this.animation) {
+          case 'idle':
+            targetBounceY = 0;
+            targetAngle = 0;
+            break;
+          case 'walking':
+            this.x += this.facingRight ? 1.2 : -1.2;
+            if (this.x < 80) this.facingRight = true;
+            if (this.x > width - 80) this.facingRight = false;
+            targetBounceY = -Math.abs(Math.sin(this.animTimer * 4)) * 8;
+            targetAngle = Math.sin(this.animTimer * 4) * 0.08;
+            break;
+          case 'running':
+            this.x += this.facingRight ? 3.0 : -3.0;
+            if (this.x < 80) this.facingRight = true;
+            if (this.x > width - 80) this.facingRight = false;
+            targetBounceY = -Math.abs(Math.sin(this.animTimer * 8)) * 16;
+            targetAngle = Math.sin(this.animTimer * 8) * 0.18;
+            break;
+          case 'jumping':
+            targetBounceY = -Math.abs(Math.sin(this.animTimer * 3.5)) * 32;
+            targetScaleY = 1 + (targetBounceY / 120);
+            targetScaleX = 1 - (targetBounceY / 200);
+            break;
+          case 'sitting':
+            targetBounceY = 18;
+            targetScaleY = 0.8;
+            targetScaleX = 1.15;
+            break;
+          case 'dancing':
+            targetAngle = Math.sin(this.animTimer * 6) * 0.35;
+            targetBounceY = -Math.abs(Math.sin(this.animTimer * 5)) * 14;
+            targetScaleX = 1 + Math.sin(this.animTimer * 6) * 0.12;
+            break;
+          case 'sleeping':
+            targetAngle = -Math.PI / 2.2;
+            targetBounceY = 30;
+            targetScaleX = 1 + Math.sin(this.animTimer * 1.5) * 0.04;
+            break;
+          case 'climbing':
+            targetBounceY = -Math.abs(Math.sin(this.animTimer * 3)) * 25;
+            targetAngle = Math.sin(this.animTimer * 4) * 0.12;
+            break;
+          case 'driving':
+            this.x += this.facingRight ? 4.5 : -4.5;
+            if (this.x < 90) this.facingRight = true;
+            if (this.x > width - 90) this.facingRight = false;
+            targetBounceY = (Math.random() - 0.5) * 3;
+            break;
+        }
+
+        this.bounceY += (targetBounceY - this.bounceY) * 0.2;
+        this.angle += (targetAngle - this.angle) * 0.2;
+        this.scaleX += (targetScaleX - this.scaleX) * 0.2;
+        this.scaleY += (targetScaleY - this.scaleY) * 0.2;
+      }
+
+      draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y + this.bounceY);
+        ctx.rotate(this.angle);
+        
+        const dir = this.facingRight ? 1 : -1;
+        ctx.scale(this.scale * this.scaleX * dir, this.scale * this.scaleY);
+
+        const w = this.baseSize;
+        const h = this.baseSize;
+
+        if (this.animation !== 'sleeping') {
+          ctx.beginPath();
+          ctx.ellipse(0, h / 2 - 5, w / 2.8, 10, 0, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(0,0,0,0.12)';
+          ctx.fill();
+        }
+
+        if (this.img.complete) {
+          ctx.drawImage(this.img, -w / 2, -h / 2, w, h);
+        }
+
+        if (selectedObject === this) {
+          ctx.strokeStyle = '#FFD166';
+          ctx.lineWidth = 4;
+          ctx.setLineDash([6, 6]);
+          ctx.beginPath();
+          ctx.arc(0, 0, w / 1.4, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+
+        // Render Speech Bubble above actor
+        if (this.speechText && this.speechTimer > 0) {
+          this.drawSpeechBubble(ctx);
+        }
+      }
+
+      drawSpeechBubble(ctx) {
+        ctx.save();
+        const topY = this.y + this.bounceY - (this.baseSize * this.scale * 0.6) - 15;
+        ctx.font = 'bold 14px Fredoka, sans-serif';
+        const textWidth = ctx.measureText(this.speechText).width;
+        const bubbleWidth = Math.max(70, textWidth + 24);
+        const bubbleHeight = 32;
+
+        const bx = this.x - bubbleWidth / 2;
+        const by = topY - bubbleHeight;
+
+        // Bubble Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.beginPath();
+        ctx.roundRect(bx + 2, by + 2, bubbleWidth, bubbleHeight, 14);
+        ctx.fill();
+
+        // Bubble background
+        ctx.fillStyle = '#FFFFFF';
+        ctx.strokeStyle = '#A06CD5';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, bubbleWidth, bubbleHeight, 14);
+        ctx.fill();
+        ctx.stroke();
+
+        // Bubble pointer tail
+        ctx.beginPath();
+        ctx.moveTo(this.x - 6, by + bubbleHeight);
+        ctx.lineTo(this.x, by + bubbleHeight + 8);
+        ctx.lineTo(this.x + 6, by + bubbleHeight);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fill();
+        ctx.strokeStyle = '#A06CD5';
+        ctx.stroke();
+
+        // Bubble Text
+        ctx.fillStyle = '#2D1B69';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.speechText, this.x, by + bubbleHeight / 2);
+        ctx.restore();
+      }
+
+      containsPoint(px, py) {
+        const rad = (this.baseSize / 2) * this.scale;
+        const dx = px - this.x;
+        const dy = py - (this.y + this.bounceY);
+        return (dx * dx + dy * dy) <= (rad * rad);
+      }
+
+      clickSoftReaction() {
+        playSound(this.category || 'bounce');
+        
+        // Random speech on click if none set
+        if (!this.speechText || this.speechTimer <= 0) {
+          const list = DEFAULT_SPEECH[this.category] || DEFAULT_SPEECH.people;
+          this.speechText = list[Math.floor(Math.random() * list.length)];
+          playSound('speech');
+        }
+        this.speechTimer = 240; // 4 seconds visible
+
+        for (let i = 0; i < 6; i++) {
+          particles.push(new Particle(this.x, this.y - 10));
+        }
+      }
+    }
+
+    class Particle {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 4;
+        this.vy = -Math.random() * 3 - 1;
+        this.size = 12 + Math.random() * 8;
+        this.life = 1.0;
+        this.icon = ['⭐', '💖', '✨', '🎉', '🎈', '💬'][Math.floor(Math.random() * 6)];
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += 0.1;
+        this.life -= 0.03;
+      }
+
+      draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.font = `${this.size}px Fredoka`;
+        ctx.fillText(this.icon, this.x, this.y);
+        ctx.restore();
+      }
+    }
+
+    function initWorld() {
+      resizeWorldCanvas();
+      window.addEventListener('resize', resizeWorldCanvas);
+
+      createStarterKingdom();
+
+      worldCanvas.addEventListener('mousedown', onWorldMouseDown);
+      worldCanvas.addEventListener('mousemove', onWorldMouseMove);
+      worldCanvas.addEventListener('mouseup', onWorldMouseUp);
+
+      worldCanvas.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        onWorldMouseDown({ clientX: touch.clientX, clientY: touch.clientY });
+      });
+      worldCanvas.addEventListener('touchmove', (e) => {
+        const touch = e.touches[0];
+        onWorldMouseMove({ clientX: touch.clientX, clientY: touch.clientY });
+      });
+      worldCanvas.addEventListener('touchend', () => {
+        onWorldMouseUp();
+      });
+
+      requestAnimationFrame(worldLoop);
+    }
+
+    function resizeWorldCanvas() {
+      const container = document.getElementById('world-canvas-container');
+      worldCanvas.width = container.clientWidth;
+      worldCanvas.height = container.clientHeight;
+    }
+
+    function createStarterKingdom() {
+      const w = window.innerWidth || 800;
+      const h = window.innerHeight || 600;
+
+      const starterCats = ['people', 'animal', 'tool', 'monster', 'vehicle', 'castle', 'tree', 'accessories'];
+      starterCats.forEach((cat, idx) => {
+        const svgUrl = generateSkinSVG(cat, (idx % 8) + 1);
+        const posX = w * (0.15 + idx * 0.1);
+        const posY = h * (0.48 + (idx % 2) * 0.12);
+        const defaultPhrases = DEFAULT_SPEECH[cat] || ["Hello!"];
+        const phrase = defaultPhrases[idx % defaultPhrases.length];
+        worldObjects.push(new KingdomActor(svgUrl, cat, posX, posY, phrase));
+      });
+    }
+
+    function buildAnimationUI() {
+      const container = document.getElementById('anim-selector-container');
+      container.innerHTML = '';
+
+      ANIMATIONS.forEach(anim => {
+        const chip = document.createElement('button');
+        chip.id = `anim-chip-${anim.id}`;
+        chip.className = 'anim-chip px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-purple-100 text-slate-700 font-bold text-xs border border-slate-200 whitespace-nowrap flex items-center gap-1';
+        chip.innerHTML = `<span>${anim.label}</span>`;
+        chip.onclick = () => setActorAnimation(anim.id);
+        container.appendChild(chip);
+      });
+    }
+
+    function setActorAnimation(animId) {
+      if (selectedObject) {
+        playSound('tap');
+        selectedObject.animation = animId;
+        updateAnimationChips();
+      }
+    }
+
+    function updateAnimationChips() {
+      if (!selectedObject) return;
+      ANIMATIONS.forEach(anim => {
+        const chip = document.getElementById(`anim-chip-${anim.id}`);
+        if (chip) {
+          if (selectedObject.animation === anim.id) {
+            chip.classList.add('active');
+          } else {
+            chip.classList.remove('active');
+          }
+        }
+      });
+    }
+
+    function setSpeechFromInput() {
+      const input = document.getElementById('speech-input');
+      if (selectedObject && input) {
+        playSound('speech');
+        selectedObject.speechText = input.value.trim();
+        selectedObject.speechTimer = selectedObject.speechText ? 300 : 0;
+      }
+    }
+
+    function bringToLife() {
+      playSound('magic');
+
+      if (activeCategory === 'backgrounds') {
+        if (currentWorldBackground === -1) {
+          customBackgroundDataUrl = studioCanvas.toDataURL();
+        }
+        triggerScreenSparkles();
+        switchMode('world');
+        updateQuestProgress('backgrounds');
+        return;
+      }
+
+      const drawnDataUrl = studioCanvas.toDataURL();
+
+      const spawnX = worldCanvas.width / 2 + (Math.random() - 0.5) * 120;
+      const spawnY = worldCanvas.height / 2 + (Math.random() - 0.5) * 100;
+
+      const list = DEFAULT_SPEECH[activeCategory] || DEFAULT_SPEECH.people;
+      const speech = list[Math.floor(Math.random() * list.length)];
+
+      const newActor = new KingdomActor(drawnDataUrl, activeCategory, spawnX, spawnY, speech);
+      worldObjects.push(newActor);
+      selectedObject = newActor;
+
+      updateQuestProgress(activeCategory);
+      triggerScreenSparkles();
+      switchMode('world');
+      updateControlPanel();
+    }
+
+    function triggerScreenSparkles() {
+      const container = document.getElementById('fx-container');
+      container.innerHTML = '';
+      for (let i = 0; i < 20; i++) {
+        const star = document.createElement('div');
+        star.className = 'absolute text-2xl animate-ping';
+        star.style.left = `${Math.random() * 100}%`;
+        star.style.top = `${Math.random() * 100}%`;
+        star.innerText = ['✨', '⭐', '🎉', '💖'][Math.floor(Math.random() * 4)];
+        container.appendChild(star);
+      }
+      setTimeout(() => { container.innerHTML = ''; }, 1200);
+    }
+
+    function worldLoop() {
+      worldCtx.clearRect(0, 0, worldCanvas.width, worldCanvas.height);
+
+      drawKingdomEnvironment(worldCtx, worldCanvas.width, worldCanvas.height);
+
+      worldObjects.sort((a, b) => a.y - b.y);
+
+      worldObjects.forEach(obj => {
+        obj.update(worldCanvas.width, worldCanvas.height);
+        obj.draw(worldCtx);
+      });
+
+      particles = particles.filter(p => p.life > 0);
+      particles.forEach(p => {
+        p.update();
+        p.draw(worldCtx);
+      });
+
+      requestAnimationFrame(worldLoop);
+    }
+
+    function drawKingdomEnvironment(ctx, w, h) {
+      if (currentWorldBackground === -1 && customBackgroundDataUrl) {
+        if (!window._customBgImg || window._customBgSrc !== customBackgroundDataUrl) {
+          window._customBgImg = new Image();
+          window._customBgImg.src = customBackgroundDataUrl;
+          window._customBgSrc = customBackgroundDataUrl;
+        }
+        if (window._customBgImg.complete) {
+          ctx.drawImage(window._customBgImg, 0, 0, w, h);
+          return;
+        }
+      }
+
+      if (currentWorldBackground > 0) {
+        const bgSvgUrl = generateSkinSVG('backgrounds', currentWorldBackground);
+        if (!window._bgImg || window._bgIndex !== currentWorldBackground) {
+          window._bgImg = new Image();
+          window._bgImg.src = bgSvgUrl;
+          window._bgIndex = currentWorldBackground;
+        }
+        if (window._bgImg.complete) {
+          ctx.drawImage(window._bgImg, 0, 0, w, h);
+          return;
+        }
+      }
+
+      // Default vibrant sky
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+      skyGrad.addColorStop(0, '#7BDFF2');
+      skyGrad.addColorStop(0.5, '#B2F7EF');
+      skyGrad.addColorStop(1, '#EFF7CF');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+      ctx.beginPath();
+      ctx.arc(w * 0.18, h * 0.15, 35, 0, Math.PI * 2);
+      ctx.arc(w * 0.23, h * 0.12, 45, 0, Math.PI * 2);
+      ctx.arc(w * 0.28, h * 0.15, 35, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#52B788';
+      ctx.beginPath();
+      ctx.ellipse(w * 0.25, h * 0.82, w * 0.45, h * 0.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#74C69D';
+      ctx.beginPath();
+      ctx.ellipse(w * 0.8, h * 0.86, w * 0.5, h * 0.45, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#95D5B2';
+      ctx.beginPath();
+      ctx.ellipse(w * 0.5, h * 0.92, w * 0.65, h * 0.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function onWorldMouseDown(e) {
+      initAudio();
+      const rect = worldCanvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+
+      let clickedObj = null;
+      for (let i = worldObjects.length - 1; i >= 0; i--) {
+        if (worldObjects[i].containsPoint(mx, my)) {
+          clickedObj = worldObjects[i];
+          break;
+        }
+      }
+
+      if (clickedObj) {
+        selectedObject = clickedObj;
+        draggedObject = clickedObj;
+        dragOffsetX = mx - clickedObj.x;
+        dragOffsetY = my - clickedObj.y;
+        clickedObj.clickSoftReaction();
+        updateControlPanel();
+      } else {
+        selectedObject = null;
+        updateControlPanel();
+      }
+    }
+
+    function onWorldMouseMove(e) {
+      if (!draggedObject) return;
+      const rect = worldCanvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+
+      draggedObject.x = mx - dragOffsetX;
+      draggedObject.y = my - dragOffsetY;
+    }
+
+    function onWorldMouseUp() {
+      draggedObject = null;
+    }
+
+    function updateControlPanel() {
+      const panel = document.getElementById('item-control-panel');
+      const label = document.getElementById('selected-item-label');
+      const speechInput = document.getElementById('speech-input');
+
+      if (selectedObject) {
+        panel.classList.remove('hidden');
+        label.innerText = `${selectedObject.category}`;
+        if (speechInput) speechInput.value = selectedObject.speechText || '';
+        updateAnimationChips();
+      } else {
+        panel.classList.add('hidden');
+      }
+    }
+
+    function scaleSelectedItem(factor) {
+      if (selectedObject) {
+        playSound('tap');
+        selectedObject.scale = Math.max(0.4, Math.min(2.5, selectedObject.scale * factor));
+      }
+    }
+
+    function deleteSelectedItem() {
+      if (selectedObject) {
+        playSound('pop');
+        worldObjects = worldObjects.filter(o => o !== selectedObject);
+        selectedObject = null;
+        updateControlPanel();
+      }
+    }
+
+    function deselectItem() {
+      selectedObject = null;
+      updateControlPanel();
+    }
+
+    /* --------------------------------------------------
+     * 5. LOCAL STORAGE SAVE & LOAD KINGDOM
+     * -------------------------------------------------- */
+    const STORAGE_KEY = 'doodle_kingdom_save_data';
+
+    function saveKingdom() {
+      try {
+        playSound('save');
+        const kingdomData = {
+          currentWorldBackground,
+          customBackgroundDataUrl,
+          quests: quests.map(q => ({ id: q.id, current: q.current, done: q.done })),
+          objects: worldObjects.map(obj => ({
+            category: obj.category,
+            x: obj.x,
+            y: obj.y,
+            scale: obj.scale,
+            animation: obj.animation,
+            speechText: obj.speechText,
+            imgData: obj.imgData
+          }))
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(kingdomData));
+        triggerScreenSparkles();
+        alert('✨ Kingdom Saved Successfully!');
+      } catch (err) {
+        console.error('Failed to save kingdom:', err);
+        alert('Unable to save kingdom. Storage may be full.');
+      }
+    }
+
+    function loadKingdom() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          alert('No saved kingdom found!');
+          return;
+        }
+        playSound('load');
+        const data = JSON.parse(raw);
+
+        currentWorldBackground = data.currentWorldBackground || 0;
+        customBackgroundDataUrl = data.customBackgroundDataUrl || null;
+
+        if (data.quests) {
+          data.quests.forEach(sq => {
+            const q = quests.find(q => q.id === sq.id);
+            if (q) {
+              q.current = sq.current;
+              q.done = sq.done;
+            }
+          });
+          renderQuests();
+        }
+
+        if (data.objects) {
+          worldObjects = data.objects.map(o => {
+            const actor = new KingdomActor(o.imgData, o.category, o.x, o.y, o.speechText || '');
+            actor.scale = o.scale || 1.0;
+            actor.animation = o.animation || 'idle';
+            return actor;
+          });
+        }
+
+        selectedObject = null;
+        updateControlPanel();
+        triggerScreenSparkles();
+        alert('🏰 Kingdom Loaded Successfully!');
+      } catch (err) {
+        console.error('Failed to load kingdom:', err);
+        alert('Error loading saved kingdom data.');
+      }
+    }
+
+    /* --------------------------------------------------
+     * 6. MODE SWITCHING & QUEST LOGIC
+     * -------------------------------------------------- */
+    function switchMode(mode) {
+      playSound('tap');
+      const worldSec = document.getElementById('mode-world');
+      const studioSec = document.getElementById('mode-studio');
+      const worldBtn = document.getElementById('nav-world-btn');
+      const studioBtn = document.getElementById('nav-studio-btn');
+
+      if (mode === 'world') {
+        worldSec.classList.remove('hidden');
+        studioSec.classList.add('hidden');
+        worldBtn.className = 'px-3 md:px-5 py-1 md:py-1.5 rounded-full font-bold text-xs md:text-base transition-all flex items-center gap-1.5 bg-white text-purple-700 shadow-md';
+        studioBtn.className = 'px-3 md:px-5 py-1 md:py-1.5 rounded-full font-bold text-xs md:text-base transition-all flex items-center gap-1.5 text-white hover:text-yellow-200';
+      } else {
+        worldSec.classList.add('hidden');
+        studioSec.classList.remove('hidden');
+        studioBtn.className = 'px-3 md:px-5 py-1 md:py-1.5 rounded-full font-bold text-xs md:text-base transition-all flex items-center gap-1.5 bg-white text-purple-700 shadow-md';
+        worldBtn.className = 'px-3 md:px-5 py-1 md:py-1.5 rounded-full font-bold text-xs md:text-base transition-all flex items-center gap-1.5 text-white hover:text-yellow-200';
+        setTimeout(resizeStudioCanvas, 50);
+      }
+    }
+
+    const quests = [
+      { id: 'people', title: 'Add 1 Hero Character', target: 1, current: 0, done: false, icon: '👥' },
+      { id: 'animal', title: 'Add 1 Animal Companion', target: 1, current: 0, done: false, icon: '🐾' },
+      { id: 'tool', title: 'Add 1 Crafting Tool', target: 1, current: 0, done: false, icon: '🛠️' },
+      { id: 'monster', title: 'Add 1 Monster Creature', target: 1, current: 0, done: false, icon: '👾' },
+      { id: 'vehicle', title: 'Add 1 Vehicle', target: 1, current: 0, done: false, icon: '🚒' },
+      { id: 'castle', title: 'Build 1 Castle Fortress', target: 1, current: 0, done: false, icon: '🏰' },
+      { id: 'tree', title: 'Plant 1 Tree', target: 1, current: 0, done: false, icon: '🌳' },
+      { id: 'backgrounds', title: 'Pick a Custom Background Theme', target: 1, current: 0, done: false, icon: '🏞️' }
+    ];
+
+    function renderQuests() {
+      const list = document.getElementById('quest-list');
+      list.innerHTML = '';
+      let completed = 0;
+
+      quests.forEach(q => {
+        if (q.current >= q.target) q.done = true;
+        if (q.done) completed++;
+
+        const div = document.createElement('div');
+        div.className = `p-2 rounded-2xl flex items-center justify-between border-2 ${q.done ? 'bg-green-50 border-green-400' : 'bg-slate-50 border-slate-200'}`;
+        div.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="text-lg">${q.icon}</span>
+            <div>
+              <p class="font-bold text-xs text-slate-800 ${q.done ? 'line-through text-slate-400' : ''}">${q.title}</p>
+              <p class="text-[10px] font-bold text-slate-400">${q.current}/${q.target} Done</p>
+            </div>
+          </div>
+          <div>
+            ${q.done ? '<i class="fa-solid fa-circle-check text-green-500 text-base"></i>' : '<i class="fa-regular fa-circle text-slate-300 text-base"></i>'}
+          </div>
+        `;
+        list.appendChild(div);
+      });
+
+      document.getElementById('quest-count-badge').innerText = `${completed}/${quests.length}`;
+    }
+
+    function updateQuestProgress(category) {
+      const q = quests.find(q => q.id === category);
+      if (q && !q.done) {
+        q.current += 1;
+        renderQuests();
+      }
+    }
+
+    function toggleQuestPanel() {
+      playSound('tap');
+      document.getElementById('quest-panel').classList.toggle('hidden');
+    }
+
+    /* --------------------------------------------------
+     * 7. INITIALIZATION & AUTO LOAD
+     * -------------------------------------------------- */
+    window.onload = () => {
+      initStudio();
+      initWorld();
+      renderQuests();
+    };
+  </script>
+</body>
+</html>
