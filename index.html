@@ -257,6 +257,12 @@
             <button onclick="setCategory('legs')" id="cat-legs" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1 rounded-xl font-bold flex items-center justify-center gap-1 text-[9px] md:text-xs">
               <span>🦵 Legs</span>
             </button>
+            <button onclick="setCategory('boat')" id="cat-boat" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1 rounded-xl font-bold flex items-center justify-center gap-1 text-[9px] md:text-xs col-span-2">
+              <span>⛵ Boats</span>
+            </button>
+            <button onclick="setCategory('fish')" id="cat-fish" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1 rounded-xl font-bold flex items-center justify-center gap-1 text-[9px] md:text-xs col-span-3">
+              <span>🐠 Fishes</span>
+            </button>
             <button onclick="setCategory('stamps')" id="cat-stamps" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1 rounded-xl font-bold flex items-center justify-center gap-1 text-[9px] md:text-xs col-span-2">
               <span>✨ Stamps</span>
             </button>
@@ -273,7 +279,7 @@
             <input type="text" id="skin-search" oninput="filterSkins()" placeholder="Search skins & stamps..." class="w-full pl-8 pr-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl outline-none focus:ring-2 focus:ring-purple-400">
           </div>
           <span id="skin-count-indicator" class="bg-purple-100 text-purple-700 text-[10px] font-extrabold px-2 py-1 rounded-xl flex items-center whitespace-nowrap">
-            40 Skins
+            30 Skins
           </span>
         </div>
 
@@ -340,7 +346,7 @@
           </div>
         </div>
 
-        <!-- LAYER ADJUSTMENT TOOLBAR (Appears when a layer in stack is selected) -->
+        <!-- LAYER ADJUSTMENT TOOLBAR -->
         <div id="layer-adjust-bar" class="hidden w-full max-w-xl bg-purple-600 text-white px-3 py-1.5 rounded-2xl shadow-lg flex items-center justify-between gap-2 z-10 shrink-0 text-xs font-bold">
           <div class="flex items-center gap-1 truncate">
             <i class="fa-solid fa-sliders"></i>
@@ -527,16 +533,15 @@
     }
 
     /* --------------------------------------------------
-     * 2. EXPANDED UNIQUE SKINS, LEGS & STAMPS CATEGORY
+     * 2. CATEGORIES (30 SKINS EACH, INCLUDING 30 BOATS & 30 FISHES)
      * -------------------------------------------------- */
-    const CATEGORIES = ['favorites', 'people', 'face', 'animal', 'tool', 'monster', 'vehicle', 'castle', 'tree', 'legs', 'stamps', 'backgrounds'];
-    let activeCategory = 'people';
+    const CATEGORIES = ['favorites', 'people', 'face', 'animal', 'tool', 'monster', 'vehicle', 'castle', 'tree', 'legs', 'boat', 'fish', 'stamps', 'backgrounds'];
+    let activeCategory = 'boat';
     let currentSkinIndex = 0; 
     let currentWorldBackground = 0; 
     let customBackgroundDataUrl = null;
     let userFavorites = [];
 
-    // MULTI-LAYER STACK WITH FREE CANVAS POSITIONS (offsetX, offsetY)
     let layerStack = [];
     let selectedLayerIndex = null;
 
@@ -551,6 +556,8 @@
       castle: ["Halt!", "Welcome!", "Protect the realm!", "Grand fortress!", "Shine!"],
       tree: ["Rustle rustle!", "Bloom!", "Fresh air!", "Grow tall!", "Peaceful!"],
       legs: ["Step step!", "Stomp stomp!", "Springy hop!", "Rolling fast!", "Cyber stride!"],
+      boat: ["Ahoy!", "Setting sail!", "Smooth waters!", "Full speed ahead!", "Anchors aweigh!"],
+      fish: ["Glub glub!", "Splash!", "Swimming along!", "Bubble pop!", "Ocean breeze!"],
       stamps: ["Stamped!", "Shiny sticker!", "Decorative badge!", "Sparkle stamp!"]
     };
 
@@ -569,88 +576,89 @@
     const FITZPATRICK_HEX = ['#FFE0BD', '#F2D3B1', '#E6BC9E', '#D9A580', '#C68B59', '#B57C4C', '#9E6738', '#8A5426'];
 
     const ITEM_NAMES = {
-      people: Array.from({length: 40}, (_, i) => [
+      people: Array.from({length: 30}, (_, i) => [
         'Chubi Wizard', 'Heavy Tank Knight', 'Skinny Mage', 'Bulky Mech Robot', 'Fairy Queen', 'Pirate Captain', 'Ninja Shadow', 'Cyber Hacker',
         'Astronaut Cadet', 'Dino Costume Boy', 'Royal Prince', 'Mermaid Princess', 'Viking Berserker', 'Samurai Blade', 'Elf Archer', 'Cute Ghost',
         'Superhero Star', 'Cyborg Medic', 'Jester Ace', 'Pajama Kid', 'Chef Supreme', 'Detective Noir', 'Alien Visitor', 'Grandmaster Wizard',
-        'Mecha Pilot', 'Snow Explorer', 'Desert Nomad', 'Gladiator Hero', 'Vampire Lord', 'Pixie Sprite', 'Steampunk Scholar', 'Shadow Assassin',
-        'Robot Guard', 'Android Girl', 'Chibi Paladin', 'Forest Ranger', 'Time Traveler', 'Oracle Mystic', 'Bounty Hunter', 'Dragon Tamer'
+        'Mecha Pilot', 'Snow Explorer', 'Desert Nomad', 'Gladiator Hero', 'Vampire Lord', 'Pixie Sprite'
       ][i]),
-      face: Array.from({length: 40}, (_, i) => {
+      face: Array.from({length: 30}, (_, i) => {
         const toneIdx = Math.floor(i / 10);
         const exprIdx = i % 10;
-        const toneName = ['Classic Yellow', 'Light Tone', 'Medium Tone', 'Deep Tone'][toneIdx] || 'Custom Tone';
+        const toneName = ['Classic Yellow', 'Light Tone', 'Medium Tone'][toneIdx] || 'Custom Tone';
         const exprName = [
           'Grinning Smile', 'Winking Wink', 'Heart Struck', 'Starry Gaze', 'Cool Shades',
           'Joyful Laugh', 'Party Celebration', 'Kissing Heart', 'Smirking Grin', 'Peaceful Zen'
         ][exprIdx];
         return `${exprName} (${toneName})`;
       }),
-      animal: Array.from({length: 40}, (_, i) => [
+      animal: Array.from({length: 30}, (_, i) => [
         'Playful Panda', 'Roaring Bengal Tiger', 'Chubby Golden Retriever', 'Whimsical Pink Piglet', 'Wise Forest Owl', 'Majestic White Lion', 'Fluffy Angora Bunny', 'Hopping Red Kangaroo',
         'Cuddly Koala Bear', 'Sly Red Fox', 'Gentle Giant Elephant', 'Curious Sea Otter', 'Chubby Emperor Penguin', 'Spotted Savannah Giraffe', 'Playful Dolphin', 'Mischievous Raccoon',
         'Spiky Hedgehog', 'Lazy Tree Sloth', 'Tropical Blue Macaw', 'Green Sea Turtle', 'Chubby Hamster', 'Spotted Cheetah', 'Alpine Gray Wolf', 'Chubby Hippo',
-        'Horned Rhinoceros', 'Pink Flamingo', 'Fluffy Alpaca', 'Chubby Beaver', 'Cute Red Panda', 'Spotted Leopard', 'Friendly Harbor Seal', 'Majestic Sea Orca',
-        'Wild Plains Zebra', 'Forest Brown Bear', 'Swift Falcon', 'Royal Peacock', 'Chubby Walrus', 'Golden Chameleon', 'Chubby Manatee', 'Playful Squirrel'
+        'Horned Rhinoceros', 'Pink Flamingo', 'Fluffy Alpaca', 'Chubby Beaver', 'Cute Red Panda', 'Spotted Leopard'
       ][i]),
-      tool: Array.from({length: 40}, (_, i) => [
+      tool: Array.from({length: 30}, (_, i) => [
         'Heavy Construction Hammer', 'Silver Hand Saw', 'Steel Screwdriver', 'Adjustable Wrench', 'Pneumatic Drill', 'Craftsman Chisel', 'Iron Anvil', 'Solid Steel Crowbar',
         'Chubby Safety Axe', 'Sharp Utility Scissors', 'Iron Digging Shovel', 'Steel Garden Rake', 'Digital Vernier Caliper', 'Laser Tape Measure', 'Bubble Spirit Level', 'Master Key Tool',
         'Soldering Iron Tool', 'Adjustable Pipe Wrench', 'Paint Roller Tool', 'Chubby Plumber Plunger', 'Pruning Shears', 'Mechanic Socket Wrench', 'Pickaxe Miner', 'Safety Goggles',
-        'Precision Tweezers', 'Carpenter Square', 'Steel Workbench Vise', 'Oil Can Injector', 'Wire Cutter Pliers', 'Flame Blowtorch', 'Hand Trowel', 'Heavy Sledgehammer',
-        'Hydraulic Jack', 'Magnet Bar', 'Heat Gun Tool', 'Tool Belt Pouch', 'Grease Gun', 'Hand Clamp', 'Chain Saw Tool', 'Brass Compass Tool'
+        'Precision Tweezers', 'Carpenter Square', 'Steel Workbench Vise', 'Oil Can Injector', 'Wire Cutter Pliers', 'Flame Blowtorch'
       ][i]),
-      monster: Array.from({length: 40}, (_, i) => [
+      monster: Array.from({length: 30}, (_, i) => [
         'Round Slime Blob', 'Multi-Eye Cyclops', 'Winged Fire Drake', 'Tentacle Deep Horror', 'Heavy Stone Golem', 'Mushroom Spore Beast', 'Fire Spark Imp', 'Shadow Beetle',
         'Frost Yeti Giant', 'Lava Fiend', 'Crystal Behemoth', 'Thunder Eagle', 'Toxic Blob Slug', 'Void Phantom', 'Mecha Kaiju', 'Spiky Sea Urchin',
         'Bubble Jellyfish', 'Glow Spore Monster', 'Iron Sentinel Monster', 'Plasma Drake', 'Cosmic Tentacle', 'Sand Crawler', 'Swamp Monster', 'Cloud Cloudling',
-        'Magma Turtle', 'Sonic Bat Creature', 'Venom Tarantula', 'Abyssal Shark Monster', 'Solar Phoenix', 'Lunar Wraith', 'Copper Centipede', 'Titan Horn Beetle',
-        'Gargoyle Statue', 'Biolumi Sea Slug', 'Frost Viper Snake', 'Flame Wyvern', 'Spectral Hound', 'Electric Stingray', 'Acid Slime Mold', 'Biohazard Spider'
+        'Magma Turtle', 'Sonic Bat Creature', 'Venom Tarantula', 'Abyssal Shark Monster', 'Solar Phoenix', 'Lunar Wraith'
       ][i]),
-      vehicle: Array.from({length: 40}, (_, i) => [
+      vehicle: Array.from({length: 30}, (_, i) => [
         'Chubby Yellow Bus', 'Low-Rider Sports Car', 'Tall Double-Decker', 'Long Steam Locomotive', 'Round Flying Saucer', 'Tall Saturn Rocket', 'Compact Vespa Scooter', 'Copter Chopper',
         'Hover Hoverboard', 'Steampunk Airship Zeppelin', 'Bigfoot Monster Truck', 'Formula Racecar', 'Deep Submarine Pod', 'Moon Buggy Rover', 'Dragon Wings Jet', 'Flying Magic Carpet',
         'Fire Truck Engine', 'Police Interceptor', 'Cute Ice Cream Truck', 'Heavy Farm Tractor', 'Cargo Container Ship', 'Supersonic Jet', 'Hang Glider Wing', 'Delivery Box Van',
-        'Armored Battle Tank', 'Electric Cargo Trike', 'Pogo Hopper Vehicle', 'Futuristic Monorail', 'Bionic Walking Mech', 'Solar Skiff Boat', 'Vintage Roadster', 'City Taxi Cab',
-        'Heavy Bulldozer', 'Tall Crane Lifter', 'Excavator Digger', 'Street Sweeper', 'Post Mail Truck', 'Formula Go-Kart', 'Speed Speedboat', 'Hover Car Pod'
+        'Armored Battle Tank', 'Electric Cargo Trike', 'Pogo Hopper Vehicle', 'Futuristic Monorail', 'Bionic Walking Mech', 'Solar Skiff Boat'
       ][i]),
-      castle: Array.from({length: 40}, (_, i) => [
+      castle: Array.from({length: 30}, (_, i) => [
         'Broad Stone Fortress', 'Tall Wizard Spire', 'Pagoda Temple Tower', 'Floating Sky Citadel', 'Deep Sea Coral Palace', 'Dark Doom Keep', 'Golden Pyramid Temple', 'Victorian Clocktower',
         'Prism Crystal Palace', 'Volcano Obsidian Fortress', 'Cloud Haven Castle', 'Glacier Ice Citadel', 'Desert Oasis Palace', 'Jungle Ancient Ruins', 'Steampunk Smelter Tower', 'Cyber Neon City Hall',
         'Elven Tree Castle', 'Dwarven Vault Stronghold', 'Magic Academy Arcana', 'Royal Throne Room', 'Outpost Watchtower', 'Haunted Gothic Manor', 'Monastery Shrine', 'Grand Colosseum',
-        'Observatory Telescope Dome', 'Lighthouse Tower', 'Bazaar Market Stand', 'Underground Bunker', 'Sky Harbor Docks', 'Neon Arcade Dome', 'Retro Diner Cafe', 'Candy Gumdrop Palace',
-        'Gingerbread Fort', 'Mushroom Village Tower', 'Coral Reef Temple', 'Space Orbital Station', 'Lunar Base Dome', 'Mars Habitat Dome', 'Asteroid Base Fort', 'Alien Crystal Pyramid'
+        'Observatory Telescope Dome', 'Lighthouse Tower', 'Bazaar Market Stand', 'Underground Bunker', 'Sky Harbor Docks', 'Neon Arcade Dome'
       ][i]),
-      tree: Array.from({length: 40}, (_, i) => [
+      tree: Array.from({length: 30}, (_, i) => [
         'Wide Chubby Oak', 'Tall Swaying Palm', 'Spiral Magic Willow', 'Giant Dome Mushroom', 'Crystal Pillar Shaft', 'Cherry Blossom Sakura', 'Round Bonsai Bush', 'Tall Pine Needle Tree',
         'Weeping Willow Drop', 'Fat Baobab Trunk', 'Spiky Saguaro Cactus', 'Tall Bamboo Stems', 'Autumn Maple Orange', 'Frost Coated Pine', 'Lava Glowing Tree', 'Neon Cyber Tree',
         'Golden Apple Tree', 'Silver Birch Trunk', 'Redwood Giant Sequoia', 'Mangrove Water Roots', 'Floating Spore Tree', 'Starlight Galaxy Flora', 'Cosmic Star Bush', 'Fern Giant Leaf',
-        'Prism Crystal Tree', 'Void Shadow Tree', 'Solar Sun Palm', 'Lunar Moon Oak', 'Quantum Cyber Bush', 'Plasma Energy Tree', 'Echo Crystal Spire', 'Cyber Thorn Tree',
-        'Bioluminescent Mushroom Tree', 'Spore Cluster Tree', 'Shimmering Coral Fern', 'Amber Fossilized Tree', 'Stone Bark Tree', 'Glacier Ice Spire Tree', 'Volcanic Ash Fern', 'Deep Sea Kelp Tree'
+        'Prism Crystal Tree', 'Void Shadow Tree', 'Solar Sun Palm', 'Lunar Moon Oak', 'Quantum Cyber Bush', 'Plasma Energy Tree'
       ][i]),
-      legs: Array.from({length: 40}, (_, i) => [
+      legs: Array.from({length: 30}, (_, i) => [
         'Bouncy Spring Stilts', 'Heavy Robot Treads', 'Roller Skate Blades', 'Claw Paws', 'Pegleg Pirate', 'Magnetic Hover Boots', 'Mech Walker Legs', 'Crystal Stride Struts',
         'Pogo Jump Boots', 'Ninja Stealth Tabi', 'Dino Claw Feet', 'Rocket Thruster Boots', 'Ice Skate Blades', 'Lava Heat Boots', 'Golden Knight Greaves', 'Slime Blob Base',
         'Cybernetic Servo Legs', 'Ghostly Wisp Tail', 'Wheeled Roller Shoes', 'Spider Multi-Legs', 'Fairy Sparkle Feet', 'Monster Stomper Boots', 'Platform Disco Shoes', 'Frog Spring Leap Legs',
-        'Octopus Tentacle Bases', 'Armored Steel Greaves', 'Sleek Runner Sneakers', 'Cloud Fluffy Paws', 'Solar Powered Struts', 'Quantum Phase Boots', 'Plasma Magnetic Treads', 'Wooden Clog Shoes',
-        'Super Bounce Springs', 'Retro High Tops', 'Bionic Prosthetic Legs', 'Feline Soft Paws', 'Titanium Stompers', 'Dragon Scale Claws', 'Royal Velvet Boots', 'Cosmic Gravity Boots'
+        'Octopus Tentacle Bases', 'Armored Steel Greaves', 'Sleek Runner Sneakers', 'Cloud Fluffy Paws', 'Solar Powered Struts', 'Quantum Phase Boots'
       ][i]),
-      stamps: Array.from({length: 40}, (_, i) => [
+      boat: Array.from({length: 30}, (_, i) => [
+        'Classic Red Sailboat', 'Royal Wooden Galleon', 'Speedy Hydrofoil', 'Steampunk Paddle Steamer', 'Cozy Fishing Skiff', 'Viking Longship Raider', 'Gondola Venice', 'Pirate Brigantine',
+        'Modern Catamaran', 'Bioluminescent Kayak', 'Hovering Cyber Skiff', 'Crystal Canoe', 'Deep Sea Explorer Sub', 'Inflatable Rubber Dinghy', 'Giant Lotus Leaf Raft', 'Golden Royal Barge',
+        'Magical Flying Boat', 'Glacier Ice Breaker', 'Volcanic Magma Skiff', 'Starlight Cosmic Barge', 'Bamboo Raft', 'Solar Powered Catamaran', 'Plasma Speedboat', 'Ghost Ship Galleon',
+        'Emerald Bay Sloop', 'Ruby Crest Yacht', 'Sapphire Wave Cutter', 'Amphibious Swamp Boat', 'Pearl Shell Shellboat', 'Neon Cyber Cruiser'
+      ][i]),
+      fish: Array.from({length: 30}, (_, i) => [
+        'Spotted Clownfish', 'Majestic Betta Splendens', 'Neon Tetra Glow', 'Golden Koi Carp', 'Deep Sea Anglerfish', 'Electric Blue Tang', 'Rainbow Guppy', 'Striped Damselfish',
+        'Spiny Pufferfish', 'Graceful Angelfish', 'Crimson Snapper', 'Electric Eeltail', 'Ocean Seahorse', 'Coral Reef Parrotfish', 'Starry Flounder', 'Bioluminescent Jellyfish',
+        'Diamond Discus Fish', 'Fire Tail Swordtail', 'Velvet Black Molly', 'Sunburst Cichlid', 'Cyber Neon Tetra', 'Crystal Glassfish', 'Cosmic Starfish', 'Golden Dragonfish',
+        'Mantaray Glider', 'Tiger Barb', 'Silver Arowana', 'Peacock Cichlid', 'Bubble Eye Goldfish', 'Shadow Phantom Tetra'
+      ][i]),
+      stamps: Array.from({length: 30}, (_, i) => [
         'Gold Star Sticker', 'Heart Love Stamp', 'Sparkle Magic Stamp', 'Crown Royal Badge', 'Lightning Bolt Stamp', 'Rainbow Arc Stamp', 'Diamond Gem Stamp', 'Fire Flame Stamp',
         'Flower Blossom Stamp', 'Skull Pirate Stamp', 'Music Note Stamp', 'Shield Crest Stamp', 'Paw Print Stamp', 'Ghost Boo Stamp', 'Alien UFO Stamp', 'Rocket Ship Stamp',
         'Coffee Cup Stamp', 'Pizza Slice Stamp', 'Donut Sweet Stamp', 'Trophy Winner Stamp', 'Balloon Party Stamp', 'Gift Box Stamp', 'Key Lock Stamp', 'Target Bullseye Stamp',
-        'Smile Happy Stamp', 'Peace Sign Stamp', 'Checkmark Badge', 'Warning Hazard Stamp', 'Sun Ray Stamp', 'Moon Crescent Stamp', 'Snowflake Crystal Stamp', 'Cactus Desert Stamp',
-        'Butterfly Wing Stamp', 'Feather Quill Stamp', 'Anchor Marine Stamp', 'Compass Rose Stamp', 'Hourglass Time Stamp', 'Balloon Floating Stamp', 'Ribbon Banner Stamp', 'Medal Honor Stamp'
+        'Smile Happy Stamp', 'Peace Sign Stamp', 'Checkmark Badge', 'Warning Hazard Stamp', 'Sun Ray Stamp', 'Moon Crescent Stamp'
       ][i]),
-      backgrounds: Array.from({length: 40}, (_, i) => [
+      backgrounds: Array.from({length: 30}, (_, i) => [
         'Deep Space Galaxy', 'Underwater Coral Reef', 'Enchanted Magical Forest', 'Wild Jungle Safari', 'Cyberpunk Neon City',
         'Gritty Street Alley', 'Candy Dessert Kingdom', 'Volcanic Lava Wasteland', 'Arctic Frozen Tundra', 'Sky Cloud Floating Island',
         'Ancient Desert Ruins', 'Haunted Spooky Woods', 'Retro 8-Bit Pixel Arcade', 'Steampunk Factory Gear', 'Golden Sunset Autumn',
         'Tokyo Midnight Neon', 'Glowing Crystal Cave', 'Alien Mars Colony', 'Orbital Space Station Interior', 'Royal Castle Garden',
         'Mystic Mountain Peak', 'Rainbow Cloud Kingdom', 'Pirate Island Beach', 'Deep Ocean Trench', 'Mushroom Village Valley',
-        'Emerald Forest Grove', 'Sunken Atlantis Ruins', 'Cyber Neon Alleyway', 'Golden Wheat Field', 'Dark Shadow Realm',
-        'Starlight Nebula Sky', 'Glacial Snow Valley', 'Fiery Dragon Lair', 'Bamboo Forest Zen', 'Ancient Stone Henge',
-        'Fairy Tale Village', 'Vintage Wild West', 'Retro Synthwave Grid', 'Magical Arcana Library', 'Floating Sky Citadel'
+        'Emerald Forest Grove', 'Sunken Atlantis Ruins', 'Cyber Neon Alleyway', 'Golden Wheat Field', 'Dark Shadow Realm'
       ][i])
     };
 
@@ -662,10 +670,56 @@
       if (index === 0) return null;
       const i = index - 1;
       let svgContent = '';
+      const colorHue = (i * 35) % 360;
 
-      if (cat === 'stamps') {
-        const stampType = i % 8;
-        const colorHue = (i * 45) % 360;
+      if (cat === 'boat') {
+        const boatType = i % 10;
+        if (boatType === 0) {
+          svgContent = `<path d="M 30 130 L 170 130 Q 140 170 100 170 Q 60 170 30 130 Z" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="5"/><line x1="100" y1="130" x2="100" y2="40" stroke="#333" stroke-width="6"/><polygon points="105,45 155,75 105,115" fill="hsl(${(colorHue+60)%360}, 90%, 60%)" stroke="#000" stroke-width="4"/>`;
+        } else if (boatType === 1) {
+          svgContent = `<path d="M 20 120 Q 100 120 180 120 L 150 165 L 50 165 Z" fill="#8D6E63" stroke="#000" stroke-width="5"/><rect x="90" y="30" width="20" height="90" fill="#333" stroke="#000" stroke-width="4"/><polygon points="85,35 40,75 85,100" fill="#E63946" stroke="#000" stroke-width="4"/><polygon points="115,35 160,75 115,100" fill="#E63946" stroke="#000" stroke-width="4"/>`;
+        } else if (boatType === 2) {
+          svgContent = `<path d="M 25 140 Q 100 170 175 140 L 160 110 L 40 110 Z" fill="hsl(${colorHue}, 90%, 55%)" stroke="#000" stroke-width="5"/><rect x="60" y="70" width="80" height="40" rx="8" fill="#FFF" stroke="#000" stroke-width="4"/><circle cx="80" cy="90" r="8" fill="#1D3557"/><circle cx="120" cy="90" r="8" fill="#1D3557"/>`;
+        } else if (boatType === 3) {
+          svgContent = `<path d="M 30 135 L 170 135 L 150 165 L 50 165 Z" fill="#2B2D42" stroke="#000" stroke-width="5"/><path d="M 60 135 L 60 50 Q 100 20 140 50 L 140 135 Z" fill="none" stroke="hsl(${colorHue}, 85%, 60%)" stroke-width="12" stroke-linecap="round"/><line x1="100" y1="135" x2="100" y2="30" stroke="#FFD166" stroke-width="6"/>`;
+        } else if (boatType === 4) {
+          svgContent = `<path d="M 35 125 Q 100 160 165 125 L 145 150 L 55 150 Z" fill="hsl(${colorHue}, 70%, 45%)" stroke="#000" stroke-width="5"/><ellipse cx="100" cy="80" rx="45" ry="30" fill="#E0F2FE" stroke="#000" stroke-width="4"/><rect x="85" y="110" width="30" height="20" fill="#333"/>`;
+        } else if (boatType === 5) {
+          svgContent = `<path d="M 15 130 L 185 130 L 160 165 L 40 165 Z" fill="#451A03" stroke="#000" stroke-width="5"/><polygon points="50,130 100,20 100,130" fill="#DC2626" stroke="#000" stroke-width="4"/><polygon points="100,130 100,20 150,130" fill="#FBBF24" stroke="#000" stroke-width="4"/>`;
+        } else if (boatType === 6) {
+          svgContent = `<path d="M 40 140 Q 100 180 160 140 L 140 110 L 60 110 Z" fill="hsl(${colorHue}, 85%, 60%)" stroke="#000" stroke-width="5"/><path d="M 60 110 Q 100 60 140 110 Z" fill="#93C5FD" stroke="#000" stroke-width="4"/>`;
+        } else if (boatType === 7) {
+          svgContent = `<path d="M 20 135 L 180 135 L 155 170 L 45 170 Z" fill="#334155" stroke="#000" stroke-width="5"/><rect x="60" y="80" width="80" height="55" rx="10" fill="#F1F5F9" stroke="#000" stroke-width="4"/><circle cx="100" cy="60" r="15" fill="#EF4444" stroke="#000" stroke-width="3"/>`;
+        } else if (boatType === 8) {
+          svgContent = `<path d="M 30 130 Q 100 165 170 130 L 150 155 L 50 155 Z" fill="hsl(${colorHue}, 75%, 55%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="80" r="35" fill="#FDE047" stroke="#000" stroke-width="4"/><path d="M 85 75 Q 100 65 115 75" fill="none" stroke="#000" stroke-width="4"/>`;
+        } else {
+          svgContent = `<path d="M 25 135 L 175 135 L 150 165 L 50 165 Z" fill="hsl(${colorHue}, 85%, 50%)" stroke="#000" stroke-width="5"/><polygon points="100,135 130,50 100,20 70,50" fill="#38BDF8" stroke="#000" stroke-width="4"/>`;
+        }
+      } else if (cat === 'fish') {
+        const fishType = i % 10;
+        if (fishType === 0) {
+          svgContent = `<path d="M 30 100 Q 80 50 140 90 L 180 60 L 170 100 L 180 140 L 140 110 Q 80 150 30 100 Z" fill="hsl(${colorHue}, 90%, 60%)" stroke="#000" stroke-width="5"/><circle cx="120" cy="85" r="7" fill="#000"/><circle cx="122" cy="83" r="2" fill="#FFF"/>`;
+        } else if (fishType === 1) {
+          svgContent = `<ellipse cx="90" cy="100" rx="55" ry="35" fill="hsl(${colorHue}, 85%, 55%)" stroke="#000" stroke-width="5"/><polygon points="145,100 185,70 175,100 185,130" fill="hsl(${(colorHue+50)%360}, 85%, 55%)" stroke="#000" stroke-width="4"/><circle cx="65" cy="90" r="6" fill="#000"/>`;
+        } else if (fishType === 2) {
+          svgContent = `<path d="M 40 100 Q 100 40 160 100 Q 100 160 40 100 Z" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="5"/><polygon points="150,100 190,75 190,125" fill="hsl(${(colorHue+80)%360}, 90%, 55%)" stroke="#000" stroke-width="4"/><circle cx="70" cy="90" r="8" fill="#FFF" stroke="#000" stroke-width="3"/><circle cx="68" cy="90" r="3" fill="#000"/>`;
+        } else if (fishType === 3) {
+          svgContent = `<path d="M 35 110 Q 90 60 150 105 L 185 80 L 175 110 L 185 140 L 150 115 Q 90 160 35 110 Z" fill="hsl(${colorHue}, 75%, 55%)" stroke="#000" stroke-width="5"/><circle cx="120" cy="95" r="6" fill="#000"/><path d="M 60 110 Q 90 90 120 110" fill="none" stroke="#000" stroke-width="3"/>`;
+        } else if (fishType === 4) {
+          svgContent = `<ellipse cx="90" cy="100" rx="50" ry="40" fill="hsl(${colorHue}, 90%, 65%)" stroke="#000" stroke-width="5"/><polygon points="135,100 180,60 170,100 180,140" fill="#FFD166" stroke="#000" stroke-width="4"/><circle cx="65" cy="85" r="8" fill="#FFF" stroke="#000" stroke-width="3"/><circle cx="67" cy="85" r="3" fill="#000"/>`;
+        } else if (fishType === 5) {
+          svgContent = `<path d="M 30 100 C 60 40 140 40 160 100 C 140 160 60 160 30 100 Z" fill="hsl(${colorHue}, 85%, 50%)" stroke="#000" stroke-width="5"/><polygon points="150,100 185,70 185,130" fill="hsl(${(colorHue+100)%360}, 90%, 55%)" stroke="#000" stroke-width="4"/><circle cx="120" cy="85" r="7" fill="#000"/>`;
+        } else if (fishType === 6) {
+          svgContent = `<path d="M 40 90 Q 90 40 150 90 L 180 60 L 170 100 L 180 140 L 150 110 Q 90 160 40 110 Z" fill="hsl(${colorHue}, 95%, 55%)" stroke="#000" stroke-width="5"/><circle cx="120" cy="85" r="6" fill="#000"/><path d="M 60 90 Q 80 110 100 90" fill="none" stroke="#FFF" stroke-width="3"/>`;
+        } else if (fishType === 7) {
+          svgContent = `<ellipse cx="90" cy="100" rx="45" ry="35" fill="hsl(${colorHue}, 80%, 45%)" stroke="#000" stroke-width="5"/><polygon points="130,100 175,65 165,100 175,135" fill="#4CC9F0" stroke="#000" stroke-width="4"/><circle cx="65" cy="90" r="6" fill="#FFF" stroke="#000" stroke-width="2"/><circle cx="65" cy="90" r="2" fill="#000"/>`;
+        } else if (fishType === 8) {
+          svgContent = `<path d="M 25 100 Q 75 50 155 85 L 185 60 L 170 100 L 185 140 L 155 115 Q 75 150 25 100 Z" fill="hsl(${colorHue}, 90%, 55%)" stroke="#000" stroke-width="5"/><circle cx="120" cy="80" r="7" fill="#000"/>`;
+        } else {
+          svgContent = `<ellipse cx="90" cy="100" rx="55" ry="30" fill="hsl(${colorHue}, 85%, 60%)" stroke="#000" stroke-width="5"/><polygon points="140,100 185,65 175,100 185,135" fill="hsl(${(colorHue+40)%360}, 90%, 55%)" stroke="#000" stroke-width="4"/><circle cx="60" cy="90" r="6" fill="#000"/>`;
+        }
+      } else if (cat === 'stamps') {
+        const stampType = i % 10;
         if (stampType === 0) {
           svgContent = `<polygon points="100,20 125,75 185,75 135,110 155,170 100,135 45,170 65,110 15,75 75,75" fill="hsl(${colorHue}, 90%, 60%)" stroke="#000" stroke-width="5"/>`;
         } else if (stampType === 1) {
@@ -680,12 +734,15 @@
           svgContent = `<path d="M 30 130 Q 100 30 170 130" fill="none" stroke="hsl(${colorHue}, 85%, 55%)" stroke-width="16" stroke-linecap="round"/><path d="M 50 150 Q 100 60 150 150" fill="none" stroke="hsl(${(colorHue+60)%360}, 85%, 55%)" stroke-width="14" stroke-linecap="round"/>`;
         } else if (stampType === 6) {
           svgContent = `<polygon points="100,25 165,85 100,175 35,85" fill="hsl(${colorHue}, 75%, 65%)" stroke="#000" stroke-width="5"/><polygon points="100,45 145,85 100,150 55,85" fill="#FFF" opacity="0.4"/>`;
-        } else {
+        } else if (stampType === 7) {
           svgContent = `<circle cx="100" cy="100" r="65" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="6"/><circle cx="100" cy="100" r="45" fill="none" stroke="#FFF" stroke-width="6"/><circle cx="100" cy="100" r="15" fill="#FFF" stroke="#000" stroke-width="4"/>`;
+        } else if (stampType === 8) {
+          svgContent = `<rect x="50" y="50" width="100" height="100" rx="20" fill="hsl(${colorHue}, 85%, 55%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="100" r="30" fill="#FFD166" stroke="#000" stroke-width="4"/>`;
+        } else {
+          svgContent = `<path d="M 100 20 L 140 80 L 180 100 L 140 120 L 100 180 L 60 120 L 20 100 L 60 80 Z" fill="hsl(${colorHue}, 90%, 50%)" stroke="#000" stroke-width="5"/>`;
         }
       } else if (cat === 'legs') {
-        const legType = i % 8;
-        const colorHue = (i * 25) % 360;
+        const legType = i % 10;
         if (legType === 0) {
           svgContent = `<path d="M 70 20 L 70 120 Q 70 150 50 170" fill="none" stroke="hsl(${colorHue}, 90%, 55%)" stroke-width="12" stroke-linecap="round"/><path d="M 130 20 L 130 120 Q 130 150 150 170" fill="none" stroke="hsl(${colorHue}, 90%, 55%)" stroke-width="12" stroke-linecap="round"/><ellipse cx="50" cy="170" rx="15" ry="8" fill="#333"/><ellipse cx="150" cy="170" rx="15" ry="8" fill="#333"/>`;
         } else if (legType === 1) {
@@ -700,8 +757,12 @@
           svgContent = `<rect x="60" y="30" width="20" height="90" fill="hsl(${colorHue}, 90%, 65%)" stroke="#000" stroke-width="3"/><rect x="120" y="30" width="20" height="90" fill="hsl(${colorHue}, 90%, 65%)" stroke="#000" stroke-width="3"/><ellipse cx="70" cy="140" rx="25" ry="12" fill="#4CC9F0" stroke="#000" stroke-width="3"/><ellipse cx="130" cy="140" rx="25" ry="12" fill="#4CC9F0" stroke="#000" stroke-width="3"/>`;
         } else if (legType === 6) {
           svgContent = `<polygon points="70,30 90,90 50,90" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="4"/><polygon points="130,30 150,90 110,90" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="4"/><rect x="50" y="110" width="100" height="50" rx="12" fill="#1D3557" stroke="#000" stroke-width="4"/>`;
-        } else {
+        } else if (legType === 7) {
           svgContent = `<path d="M 70 20 Q 90 90 70 160" fill="none" stroke="hsl(${colorHue}, 90%, 60%)" stroke-width="10" stroke-linecap="round"/><path d="M 130 20 Q 110 90 130 160" fill="none" stroke="hsl(${colorHue}, 90%, 60%)" stroke-width="10" stroke-linecap="round"/><circle cx="70" cy="165" r="8" fill="#FFD166"/><circle cx="130" cy="165" r="8" fill="#FFD166"/>`;
+        } else if (legType === 8) {
+          svgContent = `<rect x="60" y="20" width="20" height="130" rx="10" fill="hsl(${colorHue}, 85%, 40%)" stroke="#000" stroke-width="4"/><rect x="120" y="20" width="20" height="130" rx="10" fill="hsl(${colorHue}, 85%, 40%)" stroke="#000" stroke-width="4"/><circle cx="70" cy="155" r="14" fill="#FFD166" stroke="#000" stroke-width="3"/><circle cx="130" cy="155" r="14" fill="#FFD166" stroke="#000" stroke-width="3"/>`;
+        } else {
+          svgContent = `<polygon points="60,20 85,120 50,150" fill="hsl(${colorHue}, 70%, 50%)" stroke="#000" stroke-width="4"/><polygon points="140,20 115,120 150,150" fill="hsl(${colorHue}, 70%, 50%)" stroke="#000" stroke-width="4"/>`;
         }
       } else if (cat === 'face') {
         const toneGroup = Math.floor(i / 10);
@@ -709,8 +770,6 @@
         let skinColor = '#FFD166';
         if (toneGroup === 1) skinColor = FITZPATRICK_HEX[1];
         else if (toneGroup === 2) skinColor = FITZPATRICK_HEX[3];
-        else if (toneGroup === 3) skinColor = FITZPATRICK_HEX[6];
-        else if (toneGroup === 4) skinColor = FITZPATRICK_HEX[7];
 
         svgContent = `<circle cx="100" cy="100" r="70" fill="${skinColor}" stroke="#000" stroke-width="6"/>`;
 
@@ -733,11 +792,10 @@
         } else if (expr === 8) {
           svgContent += `<polygon points="100,10 135,55 65,55" fill="#FF6B6B" stroke="#000" stroke-width="4"/><circle cx="75" cy="85" r="8" fill="#000"/><circle cx="125" cy="85" r="8" fill="#000"/><path d="M 70 120 Q 100 145 130 120" fill="none" stroke="#000" stroke-width="6" stroke-linecap="round"/><circle cx="100" cy="8" r="8" fill="#FFD166" stroke="#000" stroke-width="3"/>`;
         } else {
-          svgContent += `<circle cx="75" cy="85" r="6" fill="#000"/><circle cx="125" cy="85" r="6" fill="#000"/><ellipse cx="100" cy="120" rx="10" ry="8" fill="#000"/>`;
+          svgContent += `<circle cx="75" cy="85" r="6" fill="#000"/><circle cx="125" cy="85" r="6" fill="#000"/><ellipse cx="100" cy="120" rx="10" ry="8" fill="#000"/><path d="M 85 50 L 115 50" stroke="#000" stroke-width="4"/>`;
         }
       } else if (cat === 'people') {
-        const variant = i % 8;
-        const colorHue = (i * 25) % 360;
+        const variant = i % 10;
         if (variant === 0) {
           svgContent = `<circle cx="100" cy="125" r="55" fill="hsl(${colorHue}, 70%, 55%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="65" r="35" fill="#FFD166" stroke="#000" stroke-width="5"/><circle cx="88" cy="60" r="5" fill="#000"/><circle cx="112" cy="60" r="5" fill="#000"/><path d="M 85 78 Q 100 92 115 78" fill="none" stroke="#000" stroke-width="4"/><path d="M 60 40 Q 100 10 140 40 Z" fill="hsl(${(colorHue+120)%360}, 80%, 50%)" stroke="#000" stroke-width="4"/>`;
         } else if (variant === 1) {
@@ -752,12 +810,15 @@
           svgContent = `<circle cx="100" cy="65" r="42" fill="hsl(${colorHue}, 80%, 75%)" stroke="#000" stroke-width="5"/><rect x="80" y="105" width="40" height="50" rx="10" fill="#B5179E" stroke="#000" stroke-width="4"/><circle cx="85" cy="60" r="8" fill="#000"/><circle cx="115" cy="60" r="8" fill="#000"/><circle cx="87" cy="58" r="3" fill="#FFF"/><circle cx="117" cy="58" r="3" fill="#FFF"/><path d="M 93 80 Q 100 88 107 80" fill="none" stroke="#000" stroke-width="3"/>`;
         } else if (variant === 6) {
           svgContent = `<ellipse cx="60" cy="110" rx="35" ry="18" fill="hsl(${colorHue}, 90%, 65%)" opacity="0.8" stroke="#000" stroke-width="3"/><ellipse cx="140" cy="110" rx="35" ry="18" fill="hsl(${colorHue}, 90%, 65%)" opacity="0.8" stroke="#000" stroke-width="3"/><path d="M 80 160 L 100 90 L 120 160 Z" fill="#FF6B6B" stroke="#000" stroke-width="4"/><circle cx="100" cy="60" r="22" fill="#FFE3A8" stroke="#000" stroke-width="4"/><circle cx="93" cy="58" r="3" fill="#000"/><circle cx="107" cy="58" r="3" fill="#000"/><path d="M 95 70 Q 100 76 105 70" stroke="#000" stroke-width="3" fill="none"/>`;
-        } else {
+        } else if (variant === 7) {
           svgContent = `<ellipse cx="100" cy="120" rx="35" ry="45" fill="#111" stroke="#000" stroke-width="5"/><circle cx="100" cy="55" r="28" fill="#222" stroke="#000" stroke-width="5"/><rect x="80" y="45" width="40" height="15" fill="#FDF0D5"/><circle cx="90" cy="52" r="3" fill="#000"/><circle cx="110" cy="52" r="3" fill="#000"/><path d="M 60 55 L 140 55" stroke="hsl(${colorHue}, 90%, 50%)" stroke-width="6"/>`;
+        } else if (variant === 8) {
+          svgContent = `<polygon points="100,20 170,140 30,140" fill="hsl(${colorHue}, 85%, 55%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="90" r="20" fill="#FFE3A8" stroke="#000" stroke-width="4"/>`;
+        } else {
+          svgContent = `<rect x="50" y="50" width="100" height="110" rx="15" fill="hsl(${colorHue}, 75%, 60%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="70" r="20" fill="#FFD166" stroke="#000" stroke-width="4"/>`;
         }
       } else if (cat === 'animal') {
-        const variant = i % 8;
-        const colorHue = (i * 30) % 360;
+        const variant = i % 10;
         if (variant === 0) {
           svgContent = `<circle cx="65" cy="45" r="18" fill="#000"/><circle cx="135" cy="45" r="18" fill="#000"/><ellipse cx="100" cy="115" rx="55" ry="45" fill="#FFF" stroke="#000" stroke-width="5"/><circle cx="100" cy="65" r="40" fill="#FFF" stroke="#000" stroke-width="5"/><ellipse cx="85" cy="62" rx="12" ry="8" fill="#000" transform="rotate(-15 85 62)"/><ellipse cx="115" cy="62" rx="12" ry="8" fill="#000" transform="rotate(15 115 62)"/><circle cx="85" cy="62" r="3" fill="#FFF"/><circle cx="115" cy="62" r="3" fill="#FFF"/><ellipse cx="100" cy="78" rx="8" ry="5" fill="#000"/>`;
         } else if (variant === 1) {
@@ -772,12 +833,15 @@
           svgContent = `<circle cx="70" cy="50" r="18" fill="#52B788" stroke="#000" stroke-width="4"/><circle cx="130" cy="50" r="18" fill="#52B788" stroke="#000" stroke-width="4"/><circle cx="70" cy="50" r="8" fill="#FFF"/><circle cx="130" cy="50" r="8" fill="#FFF"/><circle cx="70" cy="50" r="4" fill="#000"/><circle cx="130" cy="50" r="4" fill="#000"/><ellipse cx="100" cy="115" rx="55" ry="45" fill="hsl(${colorHue}, 60%, 50%)" stroke="#000" stroke-width="5"/><path d="M 70 85 Q 100 110 130 85" fill="none" stroke="#000" stroke-width="4"/>`;
         } else if (variant === 6) {
           svgContent = `<ellipse cx="100" cy="120" rx="55" ry="42" fill="hsl(${colorHue}, 80%, 70%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="70" r="36" fill="hsl(${colorHue}, 80%, 70%)" stroke="#000" stroke-width="5"/><circle cx="55" cy="70" r="22" fill="#48CAE4" stroke="#000" stroke-width="4"/><circle cx="145" cy="70" r="22" fill="#48CAE4" stroke="#000" stroke-width="4"/><circle cx="88" cy="65" r="5" fill="#000"/><circle cx="112" cy="65" r="5" fill="#000"/><path d="M 100 75 Q 100 115 120 110" fill="none" stroke="#000" stroke-width="8" stroke-linecap="round"/>`;
-        } else {
+        } else if (variant === 7) {
           svgContent = `<polygon points="40,30 75,65 30,75" fill="hsl(${colorHue}, 85%, 50%)" stroke="#000" stroke-width="4"/><polygon points="160,30 125,65 170,75" fill="hsl(${colorHue}, 85%, 50%)" stroke="#000" stroke-width="4"/><ellipse cx="100" cy="125" rx="45" ry="40" fill="hsl(${colorHue}, 85%, 50%)" stroke="#000" stroke-width="5"/><path d="M 65 70 Q 100 115 135 70 Z" fill="#FFF" stroke="#000" stroke-width="4"/><circle cx="82" cy="68" r="5" fill="#000"/><circle cx="118" cy="68" r="5" fill="#000"/><circle cx="100" cy="90" r="6" fill="#000"/>`;
+        } else if (variant === 8) {
+          svgContent = `<circle cx="100" cy="110" r="50" fill="hsl(${colorHue}, 75%, 55%)" stroke="#000" stroke-width="5"/><ellipse cx="100" cy="60" r="25" fill="hsl(${colorHue}, 75%, 55%)" stroke="#000" stroke-width="4"/><circle cx="90" cy="55" r="5" fill="#000"/><circle cx="110" cy="55" r="5" fill="#000"/>`;
+        } else {
+          svgContent = `<rect x="50" y="70" width="100" height="70" rx="30" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="60" r="30" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="5"/><circle cx="90" cy="55" r="5" fill="#000"/><circle cx="110" cy="55" r="5" fill="#000"/>`;
         }
       } else if (cat === 'tool') {
-        const variant = i % 8;
-        const colorHue = (i * 20) % 360;
+        const variant = i % 10;
         if (variant === 0) {
           svgContent = `<rect x="90" y="70" width="20" height="105" rx="5" fill="#8D6E63" stroke="#000" stroke-width="4"/><rect x="50" y="35" width="100" height="40" rx="8" fill="hsl(${colorHue}, 20%, 60%)" stroke="#000" stroke-width="5"/><rect x="135" y="42" width="20" height="26" fill="#455A64" stroke="#000" stroke-width="3"/>`;
         } else if (variant === 1) {
@@ -792,12 +856,15 @@
           svgContent = `<circle cx="65" cy="155" r="22" fill="hsl(${colorHue}, 80%, 55%)" stroke="#000" stroke-width="5"/><circle cx="135" cy="155" r="22" fill="hsl(${colorHue}, 80%, 55%)" stroke="#000" stroke-width="5"/><circle cx="65" cy="155" r="10" fill="#FFF"/><circle cx="135" cy="155" r="10" fill="#FFF"/><path d="M 75 140 L 130 30 L 115 25 L 65 135 Z" fill="#B0BEC5" stroke="#000" stroke-width="4"/><path d="M 125 140 L 70 30 L 85 25 L 135 135 Z" fill="#CFD8DC" stroke="#000" stroke-width="4"/><circle cx="100" cy="100" r="5" fill="#000"/>`;
         } else if (variant === 6) {
           svgContent = `<path d="M 70 120 L 50 180 L 70 180 L 85 130 Z" fill="hsl(${colorHue}, 70%, 45%)" stroke="#000" stroke-width="4"/><path d="M 130 120 L 150 180 L 130 180 L 115 130 Z" fill="hsl(${colorHue}, 70%, 45%)" stroke="#000" stroke-width="4"/><path d="M 85 120 L 70 30 L 90 20 L 100 110 Z" fill="#78909C" stroke="#000" stroke-width="4"/><path d="M 115 120 L 130 30 L 110 20 L 100 110 Z" fill="#90A4AE" stroke="#000" stroke-width="4"/><circle cx="100" cy="115" r="8" fill="#37474F" stroke="#000" stroke-width="2"/>`;
-        } else {
+        } else if (variant === 7) {
           svgContent = `<rect x="92" y="70" width="16" height="115" rx="5" transform="rotate(-15 100 125)" fill="#5D4037" stroke="#000" stroke-width="4"/><path d="M 30 70 Q 100 20 170 70 Q 100 50 30 70 Z" fill="hsl(${colorHue}, 30%, 45%)" stroke="#000" stroke-width="5"/>`;
+        } else if (variant === 8) {
+          svgContent = `<rect x="40" y="80" width="120" height="40" rx="10" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="100" r="15" fill="#FFF" stroke="#000" stroke-width="3"/>`;
+        } else {
+          svgContent = `<polygon points="100,20 160,160 40,160" fill="hsl(${colorHue}, 75%, 55%)" stroke="#000" stroke-width="5"/><rect x="85" y="100" width="30" height="60" fill="#6D4C41" stroke="#000" stroke-width="4"/>`;
         }
       } else if (cat === 'monster') {
-        const variant = i % 8;
-        const colorHue = (i * 35) % 360;
+        const variant = i % 10;
         if (variant === 0) {
           svgContent = `<ellipse cx="100" cy="120" rx="65" ry="50" fill="hsl(${colorHue}, 85%, 55%)" stroke="#000" stroke-width="5"/><circle cx="75" cy="100" r="12" fill="#FFF" stroke="#000" stroke-width="3"/><circle cx="100" cy="90" r="15" fill="#FFF" stroke="#000" stroke-width="3"/><circle cx="125" cy="100" r="12" fill="#FFF" stroke="#000" stroke-width="3"/><circle cx="75" cy="100" r="5" fill="#000"/><circle cx="100" cy="90" r="6" fill="#000"/><circle cx="125" cy="100" r="5" fill="#000"/><path d="M 75 135 Q 100 160 125 135 Z" fill="#000"/>`;
         } else if (variant === 1) {
@@ -812,12 +879,15 @@
           svgContent = `<path d="M 30 90 Q 100 10 170 90 Z" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="5"/><circle cx="70" cy="55" r="10" fill="#FFF"/><circle cx="130" cy="55" r="12" fill="#FFF"/><rect x="75" y="90" width="50" height="70" rx="20" fill="#FFF8E1" stroke="#000" stroke-width="5"/><circle cx="88" cy="115" r="4" fill="#000"/><circle cx="112" cy="115" r="4" fill="#000"/>`;
         } else if (variant === 6) {
           svgContent = `<path d="M 100 20 Q 150 70 140 130 Q 120 180 100 150 Q 80 180 60 130 Q 50 70 100 20 Z" fill="hsl(${colorHue}, 90%, 60%)" stroke="#000" stroke-width="5"/><circle cx="85" cy="85" r="6" fill="#000"/><circle cx="115" cy="85" r="6" fill="#000"/><ellipse cx="100" cy="110" rx="12" ry="8" fill="#000"/>`;
-        } else {
+        } else if (variant === 7) {
           svgContent = `<polygon points="100,30 145,140 55,140" fill="hsl(${colorHue}, 85%, 50%)" stroke="#000" stroke-width="5"/><circle cx="85" cy="80" r="7" fill="#000"/><circle cx="115" cy="80" r="7" fill="#000"/><path d="M 80 115 L 120 115" stroke="#000" stroke-width="4"/>`;
+        } else if (variant === 8) {
+          svgContent = `<circle cx="100" cy="100" r="60" fill="hsl(${colorHue}, 80%, 45%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="80" r="25" fill="#FFF" stroke="#000" stroke-width="4"/><circle cx="100" cy="80" r="10" fill="#000"/>`;
+        } else {
+          svgContent = `<path d="M 50 100 Q 100 40 150 100 Q 150 160 50 160 Z" fill="hsl(${colorHue}, 90%, 55%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="100" r="15" fill="#FFD166" stroke="#000" stroke-width="3"/>`;
         }
       } else if (cat === 'vehicle') {
-        const variant = i % 8;
-        const colorHue = (i * 28) % 360;
+        const variant = i % 10;
         if (variant === 0) {
           svgContent = `<rect x="15" y="65" width="170" height="75" rx="12" fill="hsl(${colorHue}, 90%, 55%)" stroke="#000" stroke-width="5"/><rect x="30" y="78" width="25" height="22" rx="4" fill="#8ECAE6" stroke="#000" stroke-width="3"/><rect x="65" y="78" width="25" height="22" rx="4" fill="#8ECAE6" stroke="#000" stroke-width="3"/><rect x="100" y="78" width="25" height="22" rx="4" fill="#8ECAE6" stroke="#000" stroke-width="3"/><rect x="135" y="78" width="25" height="22" rx="4" fill="#8ECAE6" stroke="#000" stroke-width="3"/><circle cx="45" cy="140" r="16" fill="#222" stroke="#000" stroke-width="4"/><circle cx="155" cy="140" r="16" fill="#222" stroke="#000" stroke-width="4"/>`;
         } else if (variant === 1) {
@@ -832,12 +902,15 @@
           svgContent = `<rect x="25" y="80" width="140" height="60" rx="30" fill="hsl(${colorHue}, 90%, 55%)" stroke="#000" stroke-width="5"/><rect x="85" y="45" width="20" height="40" fill="hsl(${colorHue}, 90%, 55%)" stroke="#000" stroke-width="4"/><circle cx="60" cy="110" r="10" fill="#E0F2FE" stroke="#000" stroke-width="3"/><circle cx="100" cy="110" r="10" fill="#E0F2FE" stroke="#000" stroke-width="3"/><circle cx="140" cy="110" r="10" fill="#E0F2FE" stroke="#000" stroke-width="3"/>`;
         } else if (variant === 6) {
           svgContent = `<rect x="45" y="55" width="110" height="50" rx="10" fill="hsl(${colorHue}, 80%, 45%)" stroke="#000" stroke-width="5"/><circle cx="45" cy="130" r="28" fill="#111" stroke="#000" stroke-width="6"/><circle cx="155" cy="130" r="28" fill="#111" stroke="#000" stroke-width="6"/><circle cx="45" cy="130" r="10" fill="#FFD166"/><circle cx="155" cy="130" r="10" fill="#FFD166"/>`;
-        } else {
+        } else if (variant === 7) {
           svgContent = `<rect x="25" y="70" width="100" height="60" fill="hsl(${colorHue}, 75%, 40%)" stroke="#000" stroke-width="5"/><rect x="115" y="40" width="55" height="90" fill="#C77DFF" stroke="#000" stroke-width="5"/><rect x="40" y="35" width="20" height="35" fill="#E71D36" stroke="#000" stroke-width="3"/><circle cx="45" cy="140" r="14" fill="#222" stroke="#000" stroke-width="3"/><circle cx="85" cy="140" r="14" fill="#222" stroke="#000" stroke-width="3"/><circle cx="135" cy="140" r="16" fill="#222" stroke="#000" stroke-width="4"/>`;
+        } else if (variant === 8) {
+          svgContent = `<polygon points="100,30 170,140 30,140" fill="hsl(${colorHue}, 80%, 55%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="120" r="15" fill="#222" stroke="#000" stroke-width="3"/>`;
+        } else {
+          svgContent = `<rect x="40" y="70" width="120" height="60" rx="20" fill="hsl(${colorHue}, 85%, 50%)" stroke="#000" stroke-width="5"/><circle cx="70" cy="130" r="15" fill="#222" stroke="#000" stroke-width="3"/><circle cx="130" cy="130" r="15" fill="#222" stroke="#000" stroke-width="3"/>`;
         }
       } else if (cat === 'castle') {
-        const variant = i % 8;
-        const colorHue = (i * 32) % 360;
+        const variant = i % 10;
         if (variant === 0) {
           svgContent = `<rect x="20" y="80" width="160" height="85" fill="hsl(${colorHue}, 15%, 60%)" stroke="#000" stroke-width="5"/><rect x="15" y="55" width="35" height="30" fill="#757575" stroke="#000" stroke-width="4"/><rect x="150" y="55" width="35" height="30" fill="#757575" stroke="#000" stroke-width="4"/><path d="M 80 165 L 80 115 Q 100 95 120 115 L 120 165 Z" fill="#3E2723" stroke="#000" stroke-width="4"/>`;
         } else if (variant === 1) {
@@ -852,12 +925,15 @@
           svgContent = `<polygon points="30,170 60,70 100,100 140,70 170,170" fill="hsl(${colorHue}, 20%, 25%)" stroke="#000" stroke-width="5"/><path d="M 60 70 Q 100 30 140 70" stroke="#FF3D00" stroke-width="6" fill="none"/>`;
         } else if (variant === 6) {
           svgContent = `<rect x="70" y="40" width="60" height="130" fill="hsl(${colorHue}, 35%, 45%)" stroke="#000" stroke-width="5"/><polygon points="100,10 135,40 65,40" fill="#4E342E" stroke="#000" stroke-width="4"/><circle cx="100" cy="70" r="18" fill="#FFF" stroke="#000" stroke-width="3"/><line x1="100" y1="70" x2="100" y2="58" stroke="#000" stroke-width="3"/><line x1="100" y1="70" x2="108" y2="70" stroke="#000" stroke-width="3"/>`;
-        } else {
+        } else if (variant === 7) {
           svgContent = `<rect x="35" y="70" width="130" height="95" rx="15" fill="hsl(${colorHue}, 25%, 75%)" stroke="#000" stroke-width="5"/><circle cx="60" cy="95" r="12" fill="#FF1744"/><circle cx="100" cy="95" r="12" fill="#00E676"/><circle cx="140" cy="95" r="12" fill="#FFEA00"/><rect x="85" y="120" width="30" height="45" fill="#5D4037" stroke="#000" stroke-width="3"/>`;
+        } else if (variant === 8) {
+          svgContent = `<rect x="40" y="50" width="120" height="110" fill="hsl(${colorHue}, 40%, 50%)" stroke="#000" stroke-width="5"/><polygon points="100,10 160,50 40,50" fill="#C77DFF" stroke="#000" stroke-width="4"/>`;
+        } else {
+          svgContent = `<circle cx="100" cy="100" r="65" fill="hsl(${colorHue}, 50%, 55%)" stroke="#000" stroke-width="5"/><rect x="80" y="80" width="40" height="80" fill="#3E2723" stroke="#000" stroke-width="4"/>`;
         }
       } else if (cat === 'tree') {
-        const variant = i % 8;
-        const colorHue = (i * 22 + 100) % 360;
+        const variant = i % 10;
         if (variant === 0) {
           svgContent = `<rect x="86" y="115" width="28" height="55" fill="#6D4C41" stroke="#000" stroke-width="4"/><circle cx="100" cy="75" r="50" fill="hsl(${colorHue}, 65%, 40%)" stroke="#000" stroke-width="5"/>`;
         } else if (variant === 1) {
@@ -872,12 +948,15 @@
           svgContent = `<polygon points="100,15 140,80 120,165 80,165 60,80" fill="hsl(${colorHue}, 90%, 60%)" stroke="#000" stroke-width="5"/><line x1="100" y1="15" x2="100" y2="165" stroke="#FFF" stroke-width="4"/>`;
         } else if (variant === 6) {
           svgContent = `<path d="M 60 160 Q 130 130 90 90 Q 120 60 110 40" fill="none" stroke="#5D4037" stroke-width="18" stroke-linecap="round"/><circle cx="110" cy="35" r="28" fill="hsl(${colorHue}, 70%, 45%)" stroke="#000" stroke-width="4"/><circle cx="70" cy="85" r="22" fill="hsl(${colorHue}, 70%, 45%)" stroke="#000" stroke-width="4"/>`;
-        } else {
+        } else if (variant === 7) {
           svgContent = `<rect x="88" y="110" width="24" height="60" fill="#4E342E" stroke="#000" stroke-width="4"/><circle cx="80" cy="70" r="35" fill="hsl(${colorHue}, 80%, 75%)" opacity="0.9" stroke="#000" stroke-width="4"/><circle cx="120" cy="70" r="35" fill="hsl(${colorHue}, 80%, 75%)" opacity="0.9" stroke="#000" stroke-width="4"/><circle cx="100" cy="50" r="35" fill="hsl(${colorHue}, 90%, 70%)" stroke="#000" stroke-width="4"/>`;
+        } else if (variant === 8) {
+          svgContent = `<polygon points="100,20 150,160 50,160" fill="hsl(${colorHue}, 75%, 45%)" stroke="#000" stroke-width="5"/><rect x="90" y="140" width="20" height="30" fill="#6D4C41" stroke="#000" stroke-width="3"/>`;
+        } else {
+          svgContent = `<circle cx="100" cy="100" r="50" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="5"/><rect x="90" y="120" width="20" height="50" fill="#6D4C41" stroke="#000" stroke-width="4"/>`;
         }
       } else if (cat === 'backgrounds') {
-        const bgType = i % 40;
-        const colorHue = (i * 9) % 360;
+        const bgType = i % 10;
         if (bgType === 0) {
           svgContent = `<rect width="200" height="200" fill="#0B091A"/><circle cx="40" cy="40" r="2" fill="#FFF"/><circle cx="160" cy="30" r="3" fill="#FFD166"/><circle cx="120" cy="120" r="1.5" fill="#FFF"/><circle cx="150" cy="150" r="22" fill="#7209B7" opacity="0.6"/><ellipse cx="150" cy="150" rx="35" ry="8" fill="none" stroke="#4CC9F0" stroke-width="3" transform="rotate(-20 150 150)"/>`;
         } else if (bgType === 1) {
@@ -945,7 +1024,7 @@
       }
 
       document.getElementById('skin-count-indicator').innerText = `${matchCount} Items`;
-      document.getElementById('category-subtitle').innerText = activeCategory === 'favorites' ? `${userFavorites.length} Saved Favs` : '40 items';
+      document.getElementById('category-subtitle').innerText = activeCategory === 'favorites' ? `${userFavorites.length} Saved Favs` : '30 items';
     }
 
     function filterSkins() {
@@ -1000,7 +1079,7 @@
         name,
         category,
         scale: 1.0,
-        x: 0, // center offset
+        x: 0,
         y: 0
       };
       layerStack.push(newLayer);
@@ -1099,7 +1178,7 @@
     let isRainbow = false;
     let rainbowHue = 0;
     let brushSize = 10;
-    let drawingCanvas = document.createElement('canvas'); // stores freehand drawing
+    let drawingCanvas = document.createElement('canvas');
     let drawingCtx = drawingCanvas.getContext('2d');
 
     const paletteColors = [
@@ -1295,7 +1374,6 @@
       initAudio();
       const pos = getCanvasPos(e);
 
-      // Check if we are interacting with selected layer position drag
       if (selectedLayerIndex !== null && layerStack[selectedLayerIndex] && currentTool === 'pen' && e.shiftKey) {
         isDraggingLayer = true;
         dragStartX = pos.x - layerStack[selectedLayerIndex].x;
@@ -1449,7 +1527,6 @@
     let panStartX = 0;
     let panStartY = 0;
 
-    // GRAVITY MODE ("Throw & Toss") VARIABLES
     let gravityModeEnabled = false;
     let throwLastX = 0;
     let throwLastY = 0;
@@ -1502,16 +1579,15 @@
 
       update(width, height) {
         if (gravityModeEnabled && this.isThrown) {
-          this.vy += 0.6; // gravity
+          this.vy += 0.6;
           this.x += this.vx;
           this.y += this.vy;
-          this.vx *= 0.98; // friction
+          this.vx *= 0.98;
 
-          // Floor bounce
           const floorY = height - 180;
           if (this.y > floorY) {
             this.y = floorY;
-            this.vy = -this.vy * 0.55; // bounce restitution
+            this.vy = -this.vy * 0.55;
             this.vx *= 0.8;
             if (Math.abs(this.vy) < 1.5) {
               this.isThrown = false;
@@ -1762,9 +1838,9 @@
     }
 
     function createStarterKingdom() {
-      const starterCats = ['people', 'face', 'animal', 'tool', 'monster', 'vehicle', 'castle', 'stamps'];
+      const starterCats = ['boat', 'fish', 'people', 'animal', 'vehicle', 'castle', 'tree', 'stamps'];
       starterCats.forEach((cat, idx) => {
-        const svgUrl = generateSkinSVG(cat, (idx % 8) + 1);
+        const svgUrl = generateSkinSVG(cat, (idx % 10) + 1);
         const posX = worldWidth * (0.1 + idx * 0.1);
         const posY = worldHeight * (0.50 + (idx % 2) * 0.12);
         const defaultPhrases = DEFAULT_SPEECH[cat] || ["Hello!"];
@@ -2191,8 +2267,8 @@
       { id: 'vehicle', title: 'Add 1 Vehicle', target: 1, current: 0, done: false, icon: '🚒' },
       { id: 'castle', title: 'Build 1 Castle Fortress', target: 1, current: 0, done: false, icon: '🏰' },
       { id: 'tree', title: 'Plant 1 Tree', target: 1, current: 0, done: false, icon: '🌳' },
-      { id: 'legs', title: 'Equip Custom Leg Style', target: 1, current: 0, done: false, icon: '🦵' },
-      { id: 'stamps', title: 'Place 1 Sticker Stamp', target: 1, current: 0, done: false, icon: '✨' }
+      { id: 'boat', title: 'Launch 1 Water Boat', target: 1, current: 0, done: false, icon: '⛵' },
+      { id: 'fish', title: 'Catch 1 Fish', target: 1, current: 0, done: false, icon: '🐠' }
     ];
 
     function renderQuests() {
@@ -2241,6 +2317,7 @@
       initStudio();
       initWorld();
       renderQuests();
+      setCategory('boat');
     };
   </script>
 </body>
