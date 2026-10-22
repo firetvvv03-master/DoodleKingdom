@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Doodle Kingdom Builders - Face Emojis 40 Skin Tones & Customizer</title>
+  <title>Doodle Kingdom Builders - Multi-Layer Skin Customizer</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
@@ -114,7 +114,7 @@
         <h1 class="text-base md:text-2xl font-extrabold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] tracking-wide leading-none">
           Doodle Kingdom
         </h1>
-        <span class="text-[9px] md:text-xs font-bold text-yellow-200 tracking-wider hidden sm:inline-block">FACE EMOJIS (40 SKIN TONES) • SPEECH BUBBLES • SAVE/LOAD</span>
+        <span class="text-[9px] md:text-xs font-bold text-yellow-200 tracking-wider hidden sm:inline-block">MULTI-LAYER SKIN BUILDER & CUSTOMIZER</span>
       </div>
     </div>
 
@@ -130,25 +130,25 @@
       </button>
     </div>
 
-    <!-- Right Controls: Save/Load, Sound, Quests -->
+    <!-- Right Controls -->
     <div class="flex items-center gap-1.5 md:gap-2">
-      <!-- Save Button -->
+      <button onclick="toggleGravityMode()" id="gravity-toggle-btn" class="candy-btn bg-indigo-500 text-white hover:bg-indigo-400 p-1.5 md:p-2 px-2.5 md:px-3 rounded-2xl font-bold flex items-center gap-1 border-2 border-indigo-600 text-xs md:text-sm" title="Toggle Throw & Toss Gravity Mode">
+        <i class="fa-solid fa-meteor"></i>
+        <span class="hidden sm:inline" id="gravity-btn-label">Gravity: Off</span>
+      </button>
       <button onclick="saveKingdom()" class="candy-btn bg-emerald-400 text-emerald-950 hover:bg-emerald-300 p-1.5 md:p-2 px-2.5 md:px-3 rounded-2xl font-bold flex items-center gap-1 border-2 border-emerald-500 text-xs md:text-sm" title="Save Kingdom">
         <i class="fa-solid fa-floppy-disk"></i>
         <span class="hidden sm:inline">Save</span>
       </button>
-      <!-- Load Button -->
       <button onclick="loadKingdom()" class="candy-btn bg-sky-300 text-sky-950 hover:bg-sky-200 p-1.5 md:p-2 px-2.5 md:px-3 rounded-2xl font-bold flex items-center gap-1 border-2 border-sky-400 text-xs md:text-sm" title="Load Kingdom">
         <i class="fa-solid fa-folder-open"></i>
         <span class="hidden sm:inline">Load</span>
       </button>
-      
       <button id="quest-toggle-btn" onclick="toggleQuestPanel()" class="candy-btn bg-yellow-300 text-yellow-950 hover:bg-yellow-200 p-1.5 md:p-2 px-2.5 md:px-3 rounded-2xl font-bold flex items-center gap-1.5 border-2 border-yellow-400 text-xs md:text-sm">
         <i class="fa-solid fa-trophy text-yellow-700"></i>
         <span class="hidden md:inline">Quests</span>
-        <span id="quest-count-badge" class="bg-red-500 text-white text-[10px] md:text-xs px-1.5 py-0.5 rounded-full font-bold">0/9</span>
+        <span id="quest-count-badge" class="bg-red-500 text-white text-[10px] md:text-xs px-1.5 py-0.5 rounded-full font-bold">0/10</span>
       </button>
-
       <button id="sound-btn" onclick="toggleSound()" class="w-8 h-8 md:w-10 md:h-10 bg-white/90 hover:bg-white rounded-2xl flex items-center justify-center text-purple-700 font-bold text-sm md:text-lg shadow-md transition-all">
         <i id="sound-icon" class="fa-solid fa-volume-high"></i>
       </button>
@@ -163,9 +163,8 @@
       <div id="world-canvas-container" class="relative w-full h-full overflow-hidden cursor-grab active:cursor-grabbing">
         <canvas id="world-canvas" class="w-full h-full block"></canvas>
         
-        <!-- Interactive Tip -->
         <div class="absolute top-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-md px-4 py-1 rounded-full shadow-lg border-2 border-purple-300 text-purple-900 font-bold text-xs md:text-sm pointer-events-none flex items-center gap-2 animate-bounce-gentle">
-          <span>✨ Click actors to speak, animate, resize, or move! ✨</span>
+          <span>✨ Throw & Toss actors in Gravity Mode or drag to scroll world! ✨</span>
         </div>
 
         <!-- Selected Object Control Bar -->
@@ -173,21 +172,27 @@
           <div class="flex items-center gap-2 flex-wrap justify-center border-b border-slate-200 pb-1.5 w-full">
             <span id="selected-item-label" class="font-extrabold text-purple-700 px-1 text-xs md:text-sm uppercase tracking-wide">Actor</span>
             
-            <!-- Speech Bubble Input -->
+            <div class="flex items-center gap-1 bg-amber-50 p-1 rounded-xl border border-amber-200">
+              <i class="fa-solid fa-signature text-amber-600 text-xs px-1"></i>
+              <input type="text" id="actor-name-input" placeholder="Name actor..." oninput="updateActorName(this.value)" class="w-24 sm:w-28 px-2 py-0.5 text-xs font-bold rounded-lg border border-slate-300 outline-none focus:ring-1 focus:ring-amber-500">
+            </div>
+
             <div class="flex items-center gap-1 bg-purple-50 p-1 rounded-xl border border-purple-200">
               <i class="fa-solid fa-comment-dots text-purple-600 text-xs px-1"></i>
-              <input type="text" id="speech-input" placeholder="Type speech..." onkeydown="if(event.key==='Enter') setSpeechFromInput()" class="w-28 sm:w-36 px-2 py-0.5 text-xs font-bold rounded-lg border border-slate-300 outline-none focus:ring-1 focus:ring-purple-500">
+              <input type="text" id="speech-input" placeholder="Type speech..." onkeydown="if(event.key==='Enter') setSpeechFromInput()" class="w-24 sm:w-32 px-2 py-0.5 text-xs font-bold rounded-lg border border-slate-300 outline-none focus:ring-1 focus:ring-purple-500">
               <button onclick="setSpeechFromInput()" class="candy-btn bg-purple-600 text-white px-2 py-0.5 rounded-lg font-bold text-[11px]">
                 Say!
               </button>
             </div>
 
-            <!-- Grow / Shrink / Delete Controls -->
             <button onclick="scaleSelectedItem(1.15)" class="candy-btn bg-magicBlue text-white px-2 py-0.5 rounded-lg font-bold text-[11px]">
               <i class="fa-solid fa-plus"></i> Grow
             </button>
             <button onclick="scaleSelectedItem(0.85)" class="candy-btn bg-magicBlue text-white px-2 py-0.5 rounded-lg font-bold text-[11px]">
               <i class="fa-solid fa-minus"></i> Shrink
+            </button>
+            <button onclick="cloneSelectedItem()" class="candy-btn bg-amber-400 text-amber-950 px-2 py-0.5 rounded-lg font-bold text-[11px]" title="Clone & Duplicate">
+              <i class="fa-solid fa-clone"></i> Clone
             </button>
             <button onclick="deleteSelectedItem()" class="candy-btn bg-magicPink text-white px-2 py-0.5 rounded-lg font-bold text-[11px]">
               <i class="fa-solid fa-trash"></i>
@@ -197,17 +202,13 @@
             </button>
           </div>
 
-          <!-- Selectable Animations Bar -->
-          <div class="flex items-center gap-1 overflow-x-auto max-w-full py-0.5 px-1" id="anim-selector-container">
-            <!-- Dynamic Animation buttons -->
-          </div>
+          <div class="flex items-center gap-1 overflow-x-auto max-w-full py-0.5 px-1" id="anim-selector-container"></div>
         </div>
 
-        <!-- Kingdom Quick Bar -->
         <div class="absolute bottom-4 right-4 flex flex-col gap-3 z-10">
           <button onclick="switchMode('studio')" class="candy-btn bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 text-white font-extrabold text-xs md:text-lg px-4 md:px-5 py-2.5 md:py-3 rounded-3xl shadow-2xl border-4 border-white flex items-center gap-2 hover:scale-105 transition-all">
             <i class="fa-solid fa-paintbrush text-base md:text-lg text-yellow-300"></i>
-            <span>Draw or Pick Skins!</span>
+            <span>Multi-Layer Studio!</span>
           </button>
         </div>
       </div>
@@ -216,16 +217,19 @@
     <!-- ==================== MODE 2: DOODLE STUDIO ==================== -->
     <section id="mode-studio" class="hidden absolute inset-0 w-full h-full bg-slate-100 flex flex-col lg:flex-row">
       
-      <!-- STUDIO LEFT SIDEBAR (Adapts automatically for phone/tablet portrait vs landscape) -->
-      <aside class="w-full lg:w-96 bg-white shadow-xl flex flex-col p-2 z-20 shrink-0 border-r border-slate-200 h-[38%] lg:h-full overflow-hidden">
+      <!-- STUDIO LEFT SIDEBAR -->
+      <aside class="w-full lg:w-96 bg-white shadow-xl flex flex-col p-2 z-20 shrink-0 border-r border-slate-200 h-[45%] lg:h-full overflow-hidden">
         
         <!-- Category Navigation Tabs -->
         <div class="mb-1.5 shrink-0">
           <div class="flex justify-between items-center mb-1">
-            <label class="text-[10px] md:text-xs font-extrabold text-purple-700 uppercase tracking-wider">Skins & Backgrounds</label>
-            <span class="text-[10px] font-bold text-slate-400">40 per category</span>
+            <label class="text-[10px] md:text-xs font-extrabold text-purple-700 uppercase tracking-wider">Categories & Layers</label>
+            <span id="category-subtitle" class="text-[10px] font-bold text-slate-400">Skins & Stamps</span>
           </div>
           <div class="grid grid-cols-5 gap-1">
+            <button onclick="setCategory('favorites')" id="cat-favorites" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1 rounded-xl font-bold flex items-center justify-center gap-1 text-[9px] md:text-xs">
+              <span>⭐ Favs</span>
+            </button>
             <button onclick="setCategory('people')" id="cat-people" class="cat-btn candy-btn bg-purple-600 text-white p-1 rounded-xl font-bold flex items-center justify-center gap-1 text-[9px] md:text-xs">
               <span>👥 Heroes</span>
             </button>
@@ -250,10 +254,13 @@
             <button onclick="setCategory('tree')" id="cat-tree" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1 rounded-xl font-bold flex items-center justify-center gap-1 text-[9px] md:text-xs">
               <span>🌳 Nature</span>
             </button>
-            <button onclick="setCategory('accessories')" id="cat-accessories" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1 rounded-xl font-bold flex items-center justify-center gap-1 text-[9px] md:text-xs">
-              <span>👑 Gear</span>
+            <button onclick="setCategory('legs')" id="cat-legs" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1 rounded-xl font-bold flex items-center justify-center gap-1 text-[9px] md:text-xs">
+              <span>🦵 Legs</span>
             </button>
-            <button onclick="setCategory('backgrounds')" id="cat-backgrounds" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1 rounded-xl font-bold flex items-center justify-center gap-1 text-[9px] md:text-xs">
+            <button onclick="setCategory('stamps')" id="cat-stamps" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1 rounded-xl font-bold flex items-center justify-center gap-1 text-[9px] md:text-xs col-span-2">
+              <span>✨ Stamps</span>
+            </button>
+            <button onclick="setCategory('backgrounds')" id="cat-backgrounds" class="cat-btn candy-btn bg-slate-100 text-slate-700 p-1 rounded-xl font-bold flex items-center justify-center gap-1 text-[9px] md:text-xs col-span-3">
               <span>🏞️ Worlds</span>
             </button>
           </div>
@@ -263,7 +270,7 @@
         <div class="mb-1.5 shrink-0 flex gap-2">
           <div class="relative flex-1">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-            <input type="text" id="skin-search" oninput="filterSkins()" placeholder="Search..." class="w-full pl-8 pr-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl outline-none focus:ring-2 focus:ring-purple-400">
+            <input type="text" id="skin-search" oninput="filterSkins()" placeholder="Search skins & stamps..." class="w-full pl-8 pr-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl outline-none focus:ring-2 focus:ring-purple-400">
           </div>
           <span id="skin-count-indicator" class="bg-purple-100 text-purple-700 text-[10px] font-extrabold px-2 py-1 rounded-xl flex items-center whitespace-nowrap">
             40 Skins
@@ -271,49 +278,83 @@
         </div>
 
         <!-- Skins Grid Container -->
-        <div class="flex-1 overflow-y-auto pr-1">
-          <div id="skins-grid" class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-3 gap-1.5 pb-2">
-            <!-- Skins Loaded dynamically -->
+        <div class="flex-1 overflow-y-auto pr-1 min-h-[140px]">
+          <div id="skins-grid" class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-3 gap-1.5 pb-2"></div>
+        </div>
+
+        <!-- MULTI-LAYER COMPOSITE STACK DRAWER -->
+        <div class="mt-2 border-t pt-2 shrink-0 bg-purple-50 p-2 rounded-2xl border border-purple-200">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-[11px] font-extrabold text-purple-900 flex items-center gap-1">
+              <i class="fa-solid fa-layer-group text-purple-600"></i> Multi-Layer Stack (<span id="layer-count">0</span>)
+            </span>
+            <button onclick="clearAllLayers()" class="text-[10px] font-bold text-red-600 hover:text-red-800 bg-red-100 px-2 py-0.5 rounded-lg">
+              Clear Layers
+            </button>
+          </div>
+          <div id="layer-stack-list" class="flex gap-1.5 overflow-x-auto py-1 min-h-[44px] items-center">
+            <span class="text-[10px] text-slate-400 font-bold italic">Click any skin/stamp above to add as a layer! Drag on canvas to move freely.</span>
           </div>
         </div>
+
       </aside>
 
       <!-- STUDIO CENTER DRAWING CANVAS & TOOLBAR -->
-      <div class="flex-1 relative bg-slate-200 flex flex-col items-center justify-between p-2 overflow-hidden h-[62%] lg:h-full">
+      <div class="flex-1 relative bg-slate-200 flex flex-col items-center justify-between p-2 overflow-hidden h-[55%] lg:h-full">
         
         <!-- Top Toolbar -->
-        <div class="w-full max-w-xl bg-white rounded-2xl shadow-md border-2 border-purple-200 p-1.5 flex flex-wrap items-center justify-between gap-1.5 z-10 shrink-0">
-          <!-- Colors -->
-          <div id="color-palette" class="flex items-center gap-1 overflow-x-auto max-w-[180px] sm:max-w-none">
-            <!-- Palette colors injected dynamically -->
+        <div class="w-full max-w-2xl bg-white rounded-2xl shadow-md border-2 border-purple-200 p-1.5 flex flex-wrap items-center justify-between gap-1.5 z-10 shrink-0">
+          <div id="color-palette" class="flex items-center gap-1 overflow-x-auto max-w-[180px] sm:max-w-none"></div>
+          
+          <div class="flex items-center gap-1 bg-slate-50 px-1 py-0.5 rounded-xl border border-slate-200 shrink-0">
+            <span class="text-[9px] font-extrabold text-slate-500 uppercase">Custom</span>
+            <input type="color" id="custom-color-picker" value="#FF6B6B" onchange="selectCustomColor(this.value)" class="w-6 h-6 rounded-lg border-2 border-white cursor-pointer p-0 bg-transparent" title="Pick Any Custom Color">
           </div>
 
           <div class="flex items-center gap-1 flex-wrap">
-            <!-- Rainbow Brush -->
             <button id="rainbow-brush-btn" onclick="toggleRainbowBrush()" class="px-2 py-1 rounded-xl bg-gradient-to-r from-red-400 via-green-400 to-purple-500 text-white font-extrabold text-[10px] md:text-xs shadow-sm border border-white hover:opacity-90 flex items-center gap-1">
               <i class="fa-solid fa-wand-magic"></i> Rainbow
             </button>
 
-            <!-- Pen & Eraser -->
             <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200">
-              <button id="tool-pen" onclick="setTool('pen')" class="px-2 py-0.5 rounded-lg bg-purple-600 text-white font-bold text-[11px]">
+              <button id="tool-pen" onclick="setTool('pen')" class="px-2 py-0.5 rounded-lg bg-purple-600 text-white font-bold text-[11px]" title="Pen">
                 <i class="fa-solid fa-pen-nib"></i> Pen
               </button>
-              <button id="tool-eraser" onclick="setTool('eraser')" class="px-2 py-0.5 rounded-lg bg-slate-200 text-slate-700 font-bold text-[11px]">
-                <i class="fa-solid fa-eraser"></i> Eraser
+              <button id="tool-bucket" onclick="setTool('bucket')" class="px-2 py-0.5 rounded-lg bg-slate-200 text-slate-700 font-bold text-[11px]" title="Paint Bucket">
+                <i class="fa-solid fa-fill-drip"></i> Fill
+              </button>
+              <button id="tool-eraser" onclick="setTool('eraser')" class="px-2 py-0.5 rounded-lg bg-slate-200 text-slate-700 font-bold text-[11px]" title="Eraser">
+                <i class="fa-solid fa-eraser"></i>
               </button>
             </div>
 
-            <!-- Brush Size Slider -->
             <div class="flex items-center gap-1 bg-slate-50 px-1.5 py-0.5 rounded-xl border border-slate-200">
               <span class="text-[9px] font-extrabold text-slate-500 uppercase">Size</span>
               <input type="range" id="brush-size" min="3" max="36" value="10" oninput="updateBrushSize(this.value)" class="w-10 md:w-14 accent-purple-600 cursor-pointer">
               <span id="brush-size-val" class="text-[10px] font-extrabold text-purple-700 w-4">10</span>
             </div>
 
-            <!-- Clear Button -->
             <button onclick="clearCanvas()" class="px-2 py-0.5 bg-red-100 hover:bg-red-200 text-red-600 font-bold rounded-xl text-[11px] border border-red-200 transition-all flex items-center gap-1">
               <i class="fa-solid fa-trash-can"></i> Clear
+            </button>
+          </div>
+        </div>
+
+        <!-- LAYER ADJUSTMENT TOOLBAR (Appears when a layer in stack is selected) -->
+        <div id="layer-adjust-bar" class="hidden w-full max-w-xl bg-purple-600 text-white px-3 py-1.5 rounded-2xl shadow-lg flex items-center justify-between gap-2 z-10 shrink-0 text-xs font-bold">
+          <div class="flex items-center gap-1 truncate">
+            <i class="fa-solid fa-sliders"></i>
+            <span id="adjusting-layer-name">Editing Layer</span>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <div class="flex items-center gap-1 bg-purple-700 px-2 py-0.5 rounded-xl">
+              <span>Size:</span>
+              <button onclick="adjustSelectedLayerScale(-0.1)" class="px-1 bg-purple-900 rounded">-</button>
+              <span id="adjust-scale-val">100%</span>
+              <button onclick="adjustSelectedLayerScale(0.1)" class="px-1 bg-purple-900 rounded">+</button>
+            </div>
+            <button onclick="removeSelectedLayer()" class="bg-red-500 hover:bg-red-600 px-2 py-0.5 rounded-xl text-white">
+              <i class="fa-solid fa-trash"></i>
             </button>
           </div>
         </div>
@@ -324,23 +365,33 @@
             <canvas id="studio-canvas" class="bg-white rounded-2xl cursor-crosshair touch-none shadow-inner block"></canvas>
             
             <div id="active-skin-title" class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-slate-900/80 backdrop-blur-md text-yellow-300 text-[10px] font-bold px-3 py-1 rounded-full pointer-events-none border border-white/20 whitespace-nowrap">
-              🎨 Blank Canvas (Clean Start)
+              🎨 Multi-Layer Studio - Click & drag layers anywhere to combine!
             </div>
           </div>
         </div>
 
-        <!-- BOTTOM ACTION BUTTON -->
-        <div class="w-full flex justify-center z-20 shrink-0 pb-1">
-          <button onclick="bringToLife()" class="candy-btn bg-gradient-to-r from-amber-400 via-pink-500 to-purple-600 text-white font-extrabold text-sm md:text-lg px-6 py-2 rounded-3xl shadow-2xl border-4 border-white flex items-center gap-2 hover:scale-105 animate-pulse-glow transition-all">
+        <!-- BOTTOM ACTION BUTTONS -->
+        <div class="w-full flex items-center justify-center gap-2 z-20 shrink-0 pb-1 flex-wrap">
+          <div class="flex items-center gap-1 bg-white px-3 py-1.5 rounded-3xl border-4 border-amber-300 shadow-md">
+            <i class="fa-solid fa-user-tag text-amber-600"></i>
+            <input type="text" id="studio-actor-name" placeholder="Actor / Creator Name..." class="px-2 py-0.5 text-xs font-bold rounded-xl outline-none bg-slate-50 border border-slate-200 w-36 sm:w-44">
+          </div>
+
+          <button onclick="saveCurrentToFavorites()" class="candy-btn bg-amber-400 text-amber-950 font-extrabold text-xs md:text-base px-3 py-2 rounded-3xl shadow-xl border-4 border-white flex items-center gap-1 hover:scale-105 transition-all" title="Save Favorite">
+            <i class="fa-solid fa-star text-amber-100"></i>
+            <span class="hidden sm:inline">⭐ Save Fav</span>
+          </button>
+          
+          <button onclick="bringToLife()" class="candy-btn bg-gradient-to-r from-amber-400 via-pink-500 to-purple-600 text-white font-extrabold text-sm md:text-lg px-5 py-2 rounded-3xl shadow-2xl border-4 border-white flex items-center gap-2 hover:scale-105 animate-pulse-glow transition-all">
             <i class="fa-solid fa-wand-magic-sparkles text-lg text-yellow-200"></i>
-            <span>Bring To Life Standing Still! ✨</span>
+            <span>Bring To Life! ✨</span>
           </button>
         </div>
 
       </div>
     </section>
 
-    <!-- ==================== QUEST OVERLAY ==================== -->
+    <!-- QUEST OVERLAY -->
     <div id="quest-panel" class="hidden absolute top-4 right-4 w-72 md:w-80 bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border-4 border-yellow-400 p-4 z-40 animate-float">
       <div class="flex justify-between items-center mb-2 border-b pb-2">
         <h3 class="text-base md:text-lg font-extrabold text-purple-700 flex items-center gap-2">
@@ -350,19 +401,15 @@
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
-      <p class="text-[11px] text-slate-500 mb-2.5 font-bold">Draw or place items from categories to complete goals!</p>
-      
-      <div id="quest-list" class="space-y-1.5">
-        <!-- Quest Items Dynamic -->
-      </div>
+      <p class="text-[11px] text-slate-500 mb-2.5 font-bold">Draw or place items from categories & stamps to complete goals!</p>
+      <div id="quest-list" class="space-y-1.5"></div>
     </div>
 
-    <!-- SPARKLE FX CONTAINER -->
     <div id="fx-container" class="sparkle-overlay"></div>
 
   </main>
 
-  <!-- ==================== JAVASCRIPT ENGINE ==================== -->
+  <!-- JAVASCRIPT ENGINE -->
   <script>
     /* --------------------------------------------------
      * 1. AUDIO SYNTHESIZER
@@ -398,19 +445,7 @@
           gain.connect(audioCtx.destination);
           osc.start(now);
           osc.stop(now + 0.05);
-        } else if (type === 'bounce') {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(260, now);
-          osc.frequency.exponentialRampToValueAtTime(480, now + 0.1);
-          gain.gain.setValueAtTime(0.2, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start(now);
-          osc.stop(now + 0.1);
-        } else if (type === 'magic') {
+        } else if (type === 'magic' || type === 'stamps') {
           const freqs = [523.25, 659.25, 783.99, 1046.50];
           freqs.forEach((f, i) => {
             const osc = audioCtx.createOscillator();
@@ -436,18 +471,6 @@
           gain.connect(audioCtx.destination);
           osc.start(now);
           osc.stop(now + 0.05);
-        } else if (type === 'speech') {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(520, now);
-          osc.frequency.linearRampToValueAtTime(880, now + 0.08);
-          gain.gain.setValueAtTime(0.1, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start(now);
-          osc.stop(now + 0.08);
         } else if (type === 'save') {
           [440, 554.37, 659.25].forEach((f, i) => {
             const osc = audioCtx.createOscillator();
@@ -504,15 +527,21 @@
     }
 
     /* --------------------------------------------------
-     * 2. EXPANDED UNIQUE SKINS (INCLUDING 40 FACE EMOJI SKIN TONES)
+     * 2. EXPANDED UNIQUE SKINS, LEGS & STAMPS CATEGORY
      * -------------------------------------------------- */
-    const CATEGORIES = ['people', 'face', 'animal', 'tool', 'monster', 'vehicle', 'castle', 'tree', 'accessories', 'backgrounds'];
+    const CATEGORIES = ['favorites', 'people', 'face', 'animal', 'tool', 'monster', 'vehicle', 'castle', 'tree', 'legs', 'stamps', 'backgrounds'];
     let activeCategory = 'people';
-    let currentSkinIndex = 0; // 0 = Blank Canvas
-    let currentWorldBackground = 0; // 0 = default sky
+    let currentSkinIndex = 0; 
+    let currentWorldBackground = 0; 
     let customBackgroundDataUrl = null;
+    let userFavorites = [];
+
+    // MULTI-LAYER STACK WITH FREE CANVAS POSITIONS (offsetX, offsetY)
+    let layerStack = [];
+    let selectedLayerIndex = null;
 
     const DEFAULT_SPEECH = {
+      favorites: ["My favorite creation!", "So special!", "Made with love!", "Magical masterpiece!"],
       people: ["Hello there!", "Ready for adventure!", "Let's explore!", "For the Kingdom!", "Greetings!"],
       face: ["Grinning!", "Winking!", "So cool!", "Feeling great!", "Big smile!"],
       animal: ["Woof!", "Meow!", "Roar!", "Squeak!", "Chirp!"],
@@ -521,7 +550,8 @@
       vehicle: ["Vroom vroom!", "Beep beep!", "Zoom!", "Honk!", "Whoosh!"],
       castle: ["Halt!", "Welcome!", "Protect the realm!", "Grand fortress!", "Shine!"],
       tree: ["Rustle rustle!", "Bloom!", "Fresh air!", "Grow tall!", "Peaceful!"],
-      accessories: ["Shine bright!", "Power up!", "Magic glowing!", "Sparkle!", "Equipped!"]
+      legs: ["Step step!", "Stomp stomp!", "Springy hop!", "Rolling fast!", "Cyber stride!"],
+      stamps: ["Stamped!", "Shiny sticker!", "Decorative badge!", "Sparkle stamp!"]
     };
 
     const ANIMATIONS = [
@@ -537,10 +567,6 @@
     ];
 
     const FITZPATRICK_HEX = ['#FFE0BD', '#F2D3B1', '#E6BC9E', '#D9A580', '#C68B59', '#B57C4C', '#9E6738', '#8A5426'];
-    const FACE_EXPRESSIONS = [
-      'Grinning Face', 'Beaming Face', 'Joyful Laugh', 'Winking Face', 'Smiling Eyes', 
-      'Heart Eyes', 'Starry-Eyed', 'Cool Sunglasses', 'Party Face', 'Relieved Face'
-    ];
 
     const ITEM_NAMES = {
       people: Array.from({length: 40}, (_, i) => [
@@ -602,12 +628,19 @@
         'Prism Crystal Tree', 'Void Shadow Tree', 'Solar Sun Palm', 'Lunar Moon Oak', 'Quantum Cyber Bush', 'Plasma Energy Tree', 'Echo Crystal Spire', 'Cyber Thorn Tree',
         'Bioluminescent Mushroom Tree', 'Spore Cluster Tree', 'Shimmering Coral Fern', 'Amber Fossilized Tree', 'Stone Bark Tree', 'Glacier Ice Spire Tree', 'Volcanic Ash Fern', 'Deep Sea Kelp Tree'
       ][i]),
-      accessories: Array.from({length: 40}, (_, i) => [
-        'Royal Crown Tiara', 'Oak Wizard Staff', 'Dragon Crest Shield', 'Angel Feather Wings', 'Spell Tome Book', 'Knight Greatsword', 'Golden Skeleton Key', 'Star Wand Scepter',
-        'Cyber Visor Helmet', 'Dual Jetpack Unit', 'Plasma Energy Blade', 'Aegis Force Shield', 'Crystal Vision Orb', 'Phoenix Flame Feather', 'Shadow Phantom Cloak', 'Viking Battle Axe',
-        'Ninja Shuriken Star', 'Gold Scepter Staff', 'Pirate Cutlass Sword', 'Steampunk Brass Goggles', 'Heavy Mech Shoulder Armor', 'Glowing Halo Ring', 'Demon Horn Set', 'Fluffy Cat Ears',
-        'Hero Flying Cape', 'Treasure Chest Box', 'Magic Potion Flask', 'Ancient Hourglass', 'Pirate Compass', 'Brass Telescope', 'Genie Magic Lamp', 'Power Gem Ring',
-        'Diamond Pendant', 'Silver Locket', 'Champion Gold Medal', 'Heavy Title Belt', 'Tower Kite Shield', 'Alchemist Vial Set', 'Rune Engraved Stone', 'Core Energy Battery'
+      legs: Array.from({length: 40}, (_, i) => [
+        'Bouncy Spring Stilts', 'Heavy Robot Treads', 'Roller Skate Blades', 'Claw Paws', 'Pegleg Pirate', 'Magnetic Hover Boots', 'Mech Walker Legs', 'Crystal Stride Struts',
+        'Pogo Jump Boots', 'Ninja Stealth Tabi', 'Dino Claw Feet', 'Rocket Thruster Boots', 'Ice Skate Blades', 'Lava Heat Boots', 'Golden Knight Greaves', 'Slime Blob Base',
+        'Cybernetic Servo Legs', 'Ghostly Wisp Tail', 'Wheeled Roller Shoes', 'Spider Multi-Legs', 'Fairy Sparkle Feet', 'Monster Stomper Boots', 'Platform Disco Shoes', 'Frog Spring Leap Legs',
+        'Octopus Tentacle Bases', 'Armored Steel Greaves', 'Sleek Runner Sneakers', 'Cloud Fluffy Paws', 'Solar Powered Struts', 'Quantum Phase Boots', 'Plasma Magnetic Treads', 'Wooden Clog Shoes',
+        'Super Bounce Springs', 'Retro High Tops', 'Bionic Prosthetic Legs', 'Feline Soft Paws', 'Titanium Stompers', 'Dragon Scale Claws', 'Royal Velvet Boots', 'Cosmic Gravity Boots'
+      ][i]),
+      stamps: Array.from({length: 40}, (_, i) => [
+        'Gold Star Sticker', 'Heart Love Stamp', 'Sparkle Magic Stamp', 'Crown Royal Badge', 'Lightning Bolt Stamp', 'Rainbow Arc Stamp', 'Diamond Gem Stamp', 'Fire Flame Stamp',
+        'Flower Blossom Stamp', 'Skull Pirate Stamp', 'Music Note Stamp', 'Shield Crest Stamp', 'Paw Print Stamp', 'Ghost Boo Stamp', 'Alien UFO Stamp', 'Rocket Ship Stamp',
+        'Coffee Cup Stamp', 'Pizza Slice Stamp', 'Donut Sweet Stamp', 'Trophy Winner Stamp', 'Balloon Party Stamp', 'Gift Box Stamp', 'Key Lock Stamp', 'Target Bullseye Stamp',
+        'Smile Happy Stamp', 'Peace Sign Stamp', 'Checkmark Badge', 'Warning Hazard Stamp', 'Sun Ray Stamp', 'Moon Crescent Stamp', 'Snowflake Crystal Stamp', 'Cactus Desert Stamp',
+        'Butterfly Wing Stamp', 'Feather Quill Stamp', 'Anchor Marine Stamp', 'Compass Rose Stamp', 'Hourglass Time Stamp', 'Balloon Floating Stamp', 'Ribbon Banner Stamp', 'Medal Honor Stamp'
       ][i]),
       backgrounds: Array.from({length: 40}, (_, i) => [
         'Deep Space Galaxy', 'Underwater Coral Reef', 'Enchanted Magical Forest', 'Wild Jungle Safari', 'Cyberpunk Neon City',
@@ -622,11 +655,55 @@
     };
 
     function generateSkinSVG(cat, index) {
+      if (cat === 'favorites') {
+        const fav = userFavorites[index - 1];
+        return fav ? fav.dataUrl : '';
+      }
       if (index === 0) return null;
       const i = index - 1;
       let svgContent = '';
 
-      if (cat === 'face') {
+      if (cat === 'stamps') {
+        const stampType = i % 8;
+        const colorHue = (i * 45) % 360;
+        if (stampType === 0) {
+          svgContent = `<polygon points="100,20 125,75 185,75 135,110 155,170 100,135 45,170 65,110 15,75 75,75" fill="hsl(${colorHue}, 90%, 60%)" stroke="#000" stroke-width="5"/>`;
+        } else if (stampType === 1) {
+          svgContent = `<path d="M 100 160 C 40 110 20 70 45 45 C 70 20 100 55 100 55 C 100 55 130 20 155 45 C 180 70 160 110 100 160 Z" fill="hsl(${colorHue}, 85%, 55%)" stroke="#000" stroke-width="5"/>`;
+        } else if (stampType === 2) {
+          svgContent = `<polygon points="100,20 115,75 170,75 125,105 140,160 100,125 60,160 75,105 30,75 85,75" fill="#FFD166" stroke="#000" stroke-width="4"/><circle cx="100" cy="95" r="15" fill="hsl(${colorHue}, 90%, 55%)" stroke="#000" stroke-width="3"/>`;
+        } else if (stampType === 3) {
+          svgContent = `<path d="M 40 140 L 40 70 L 70 95 L 100 50 L 130 95 L 160 70 L 160 140 Z" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="115" r="8" fill="#FFD166" stroke="#000" stroke-width="2"/>`;
+        } else if (stampType === 4) {
+          svgContent = `<polygon points="110,15 50,110 105,110 90,185 160,85 105,85" fill="hsl(${colorHue}, 95%, 55%)" stroke="#000" stroke-width="5"/>`;
+        } else if (stampType === 5) {
+          svgContent = `<path d="M 30 130 Q 100 30 170 130" fill="none" stroke="hsl(${colorHue}, 85%, 55%)" stroke-width="16" stroke-linecap="round"/><path d="M 50 150 Q 100 60 150 150" fill="none" stroke="hsl(${(colorHue+60)%360}, 85%, 55%)" stroke-width="14" stroke-linecap="round"/>`;
+        } else if (stampType === 6) {
+          svgContent = `<polygon points="100,25 165,85 100,175 35,85" fill="hsl(${colorHue}, 75%, 65%)" stroke="#000" stroke-width="5"/><polygon points="100,45 145,85 100,150 55,85" fill="#FFF" opacity="0.4"/>`;
+        } else {
+          svgContent = `<circle cx="100" cy="100" r="65" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="6"/><circle cx="100" cy="100" r="45" fill="none" stroke="#FFF" stroke-width="6"/><circle cx="100" cy="100" r="15" fill="#FFF" stroke="#000" stroke-width="4"/>`;
+        }
+      } else if (cat === 'legs') {
+        const legType = i % 8;
+        const colorHue = (i * 25) % 360;
+        if (legType === 0) {
+          svgContent = `<path d="M 70 20 L 70 120 Q 70 150 50 170" fill="none" stroke="hsl(${colorHue}, 90%, 55%)" stroke-width="12" stroke-linecap="round"/><path d="M 130 20 L 130 120 Q 130 150 150 170" fill="none" stroke="hsl(${colorHue}, 90%, 55%)" stroke-width="12" stroke-linecap="round"/><ellipse cx="50" cy="170" rx="15" ry="8" fill="#333"/><ellipse cx="150" cy="170" rx="15" ry="8" fill="#333"/>`;
+        } else if (legType === 1) {
+          svgContent = `<rect x="55" y="30" width="30" height="110" rx="6" fill="hsl(${colorHue}, 80%, 45%)" stroke="#000" stroke-width="4"/><rect x="115" y="30" width="30" height="110" rx="6" fill="hsl(${colorHue}, 80%, 45%)" stroke="#000" stroke-width="4"/><rect x="40" y="140" width="120" height="30" rx="10" fill="#222" stroke="#000" stroke-width="4"/><line x1="60" y1="155" x2="140" y2="155" stroke="#FFD166" stroke-width="4"/>`;
+        } else if (legType === 2) {
+          svgContent = `<path d="M 70 20 L 70 100" stroke="hsl(${colorHue}, 75%, 50%)" stroke-width="10"/><path d="M 130 20 L 130 100" stroke="hsl(${colorHue}, 75%, 50%)" stroke-width="10"/><circle cx="70" cy="130" r="25" fill="none" stroke="#E63946" stroke-width="8"/><circle cx="130" cy="130" r="25" fill="none" stroke="#E63946" stroke-width="8"/><circle cx="70" cy="130" r="8" fill="#1D3557"/><circle cx="130" cy="130" r="8" fill="#1D3557"/>`;
+        } else if (legType === 3) {
+          svgContent = `<ellipse cx="70" cy="130" rx="20" ry="16" fill="hsl(${colorHue}, 85%, 55%)" stroke="#000" stroke-width="4"/><ellipse cx="130" cy="130" rx="20" ry="16" fill="hsl(${colorHue}, 85%, 55%)" stroke="#000" stroke-width="4"/><circle cx="60" cy="140" r="5" fill="#FFF"/><circle cx="80" cy="140" r="5" fill="#FFF"/><circle cx="120" cy="140" r="5" fill="#FFF"/><circle cx="140" cy="140" r="5" fill="#FFF"/>`;
+        } else if (legType === 4) {
+          svgContent = `<path d="M 85 30 L 70 160" stroke="#8D6E63" stroke-width="14" stroke-linecap="round"/><path d="M 115 30 L 130 160" stroke="#8D6E63" stroke-width="14" stroke-linecap="round"/><circle cx="70" cy="165" r="10" fill="#222"/><circle cx="130" cy="165" r="10" fill="#222"/>`;
+        } else if (legType === 5) {
+          svgContent = `<rect x="60" y="30" width="20" height="90" fill="hsl(${colorHue}, 90%, 65%)" stroke="#000" stroke-width="3"/><rect x="120" y="30" width="20" height="90" fill="hsl(${colorHue}, 90%, 65%)" stroke="#000" stroke-width="3"/><ellipse cx="70" cy="140" rx="25" ry="12" fill="#4CC9F0" stroke="#000" stroke-width="3"/><ellipse cx="130" cy="140" rx="25" ry="12" fill="#4CC9F0" stroke="#000" stroke-width="3"/>`;
+        } else if (legType === 6) {
+          svgContent = `<polygon points="70,30 90,90 50,90" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="4"/><polygon points="130,30 150,90 110,90" fill="hsl(${colorHue}, 80%, 50%)" stroke="#000" stroke-width="4"/><rect x="50" y="110" width="100" height="50" rx="12" fill="#1D3557" stroke="#000" stroke-width="4"/>`;
+        } else {
+          svgContent = `<path d="M 70 20 Q 90 90 70 160" fill="none" stroke="hsl(${colorHue}, 90%, 60%)" stroke-width="10" stroke-linecap="round"/><path d="M 130 20 Q 110 90 130 160" fill="none" stroke="hsl(${colorHue}, 90%, 60%)" stroke-width="10" stroke-linecap="round"/><circle cx="70" cy="165" r="8" fill="#FFD166"/><circle cx="130" cy="165" r="8" fill="#FFD166"/>`;
+        }
+      } else if (cat === 'face') {
         const toneGroup = Math.floor(i / 10);
         const expr = i % 10;
         let skinColor = '#FFD166';
@@ -798,30 +875,9 @@
         } else {
           svgContent = `<rect x="88" y="110" width="24" height="60" fill="#4E342E" stroke="#000" stroke-width="4"/><circle cx="80" cy="70" r="35" fill="hsl(${colorHue}, 80%, 75%)" opacity="0.9" stroke="#000" stroke-width="4"/><circle cx="120" cy="70" r="35" fill="hsl(${colorHue}, 80%, 75%)" opacity="0.9" stroke="#000" stroke-width="4"/><circle cx="100" cy="50" r="35" fill="hsl(${colorHue}, 90%, 70%)" stroke="#000" stroke-width="4"/>`;
         }
-      } else if (cat === 'accessories') {
-        const variant = i % 8;
-        const colorHue = (i * 33) % 360;
-        if (variant === 0) {
-          svgContent = `<path d="M 30 135 L 45 50 L 75 95 L 100 30 L 125 95 L 155 50 L 170 135 Z" fill="hsl(${colorHue}, 90%, 55%)" stroke="#000" stroke-width="5"/><rect x="30" y="130" width="140" height="22" rx="4" fill="#E71D36" stroke="#000" stroke-width="3"/><circle cx="100" cy="70" r="8" fill="#4CC9F0"/>`;
-        } else if (variant === 1) {
-          svgContent = `<rect x="92" y="65" width="16" height="115" rx="8" fill="#795548" stroke="#000" stroke-width="4"/><circle cx="100" cy="45" r="24" fill="hsl(${colorHue}, 75%, 60%)" stroke="#000" stroke-width="5"/><circle cx="100" cy="45" r="10" fill="#FFF"/>`;
-        } else if (variant === 2) {
-          svgContent = `<path d="M 40 45 L 160 45 L 160 100 Q 160 165 100 185 Q 40 165 40 100 Z" fill="hsl(${colorHue}, 80%, 45%)" stroke="#000" stroke-width="5"/><path d="M 100 45 L 100 185" stroke="#FFD166" stroke-width="6"/><circle cx="100" cy="105" r="22" fill="#FFD166" stroke="#000" stroke-width="3"/>`;
-        } else if (variant === 3) {
-          svgContent = `<path d="M 100 100 Q 30 20 10 90 Q 50 140 100 110 Z" fill="hsl(${colorHue}, 70%, 90%)" stroke="#000" stroke-width="4"/><path d="M 100 100 Q 170 20 190 90 Q 150 140 100 110 Z" fill="hsl(${colorHue}, 70%, 90%)" stroke="#000" stroke-width="4"/>`;
-        } else if (variant === 4) {
-          svgContent = `<rect x="40" y="60" width="45" height="90" rx="15" fill="hsl(${colorHue}, 20%, 70%)" stroke="#000" stroke-width="4"/><rect x="115" y="60" width="45" height="90" rx="15" fill="hsl(${colorHue}, 20%, 70%)" stroke="#000" stroke-width="4"/><path d="M 50 150 L 62 180 L 75 150 Z" fill="#FF5722"/><path d="M 125 150 L 137 180 L 150 150 Z" fill="#FF5722"/>`;
-        } else if (variant === 5) {
-          svgContent = `<path d="M 60 160 Q 140 140 165 40 Q 130 70 50 140 Z" fill="hsl(${colorHue}, 25%, 80%)" stroke="#000" stroke-width="4"/><circle cx="50" cy="150" r="16" fill="#FFD166" stroke="#000" stroke-width="3"/>`;
-        } else if (variant === 6) {
-          svgContent = `<circle cx="65" cy="100" r="30" fill="#795548" stroke="#000" stroke-width="5"/><circle cx="135" cy="100" r="30" fill="#795548" stroke="#000" stroke-width="5"/><circle cx="65" cy="100" r="20" fill="hsl(${colorHue}, 90%, 60%)" stroke="#000" stroke-width="3"/><circle cx="135" cy="100" r="20" fill="hsl(${colorHue}, 90%, 60%)" stroke="#000" stroke-width="3"/><line x1="95" y1="100" x2="105" y2="100" stroke="#000" stroke-width="6"/>`;
-        } else {
-          svgContent = `<rect x="35" y="85" width="130" height="70" fill="hsl(${colorHue}, 40%, 45%)" stroke="#000" stroke-width="5"/><path d="M 35 85 Q 100 45 165 85 Z" fill="#6D4C41" stroke="#000" stroke-width="5"/><rect x="90" y="90" width="20" height="25" fill="#FFD166" stroke="#000" stroke-width="3"/>`;
-        }
       } else if (cat === 'backgrounds') {
         const bgType = i % 40;
         const colorHue = (i * 9) % 360;
-
         if (bgType === 0) {
           svgContent = `<rect width="200" height="200" fill="#0B091A"/><circle cx="40" cy="40" r="2" fill="#FFF"/><circle cx="160" cy="30" r="3" fill="#FFD166"/><circle cx="120" cy="120" r="1.5" fill="#FFF"/><circle cx="150" cy="150" r="22" fill="#7209B7" opacity="0.6"/><ellipse cx="150" cy="150" rx="35" ry="8" fill="none" stroke="#4CC9F0" stroke-width="3" transform="rotate(-20 150 150)"/>`;
         } else if (bgType === 1) {
@@ -846,10 +902,16 @@
       container.innerHTML = '';
 
       let matchCount = 0;
-      const count = ITEM_NAMES[activeCategory].length;
+      const count = activeCategory === 'favorites' ? userFavorites.length : ITEM_NAMES[activeCategory].length;
 
       for (let i = 0; i <= count; i++) {
-        const skinName = i === 0 ? (activeCategory === 'backgrounds' ? 'Blank Custom World' : 'Blank Canvas') : ITEM_NAMES[activeCategory][i - 1];
+        let skinName = '';
+        if (activeCategory === 'favorites') {
+          if (i === 0) continue;
+          skinName = userFavorites[i - 1].name;
+        } else {
+          skinName = i === 0 ? (activeCategory === 'backgrounds' ? 'Blank Custom World' : 'Blank Canvas') : ITEM_NAMES[activeCategory][i - 1];
+        }
         
         if (filterText && !skinName.toLowerCase().includes(filterText.toLowerCase()) && !String(i).includes(filterText)) {
           continue;
@@ -861,7 +923,7 @@
 
         card.className = `skin-card cursor-pointer rounded-xl p-1 flex flex-col items-center justify-between border-2 ${isSelected ? 'bg-purple-100 border-purple-600 ring-2 ring-purple-400' : 'bg-white border-slate-200 hover:border-purple-300'} shadow-sm`;
         
-        if (i === 0) {
+        if (activeCategory !== 'favorites' && i === 0) {
           card.innerHTML = `
             <div class="w-full h-12 rounded-lg bg-slate-50 border-2 border-dashed border-purple-400 flex items-center justify-center text-lg text-purple-600">
               ${activeCategory === 'backgrounds' ? '🏞️' : '✏️'}
@@ -869,10 +931,10 @@
             <span class="text-[9px] font-extrabold text-slate-800 mt-1 text-center leading-tight">${skinName}</span>
           `;
         } else {
-          const svgUrl = generateSkinSVG(activeCategory, i);
+          const imgUrl = activeCategory === 'favorites' ? userFavorites[i - 1].dataUrl : generateSkinSVG(activeCategory, i);
           card.innerHTML = `
-            <div class="w-full h-12 rounded-lg bg-slate-50 p-1 flex items-center justify-center overflow-hidden">
-              <img src="${svgUrl}" class="max-h-full max-w-full object-contain pointer-events-none" alt="${skinName}">
+            <div class="w-full h-12 rounded-lg bg-slate-50 p-1 flex items-center justify-center overflow-hidden relative">
+              <img src="${imgUrl}" class="max-h-full max-w-full object-contain pointer-events-none" alt="${skinName}">
             </div>
             <span class="text-[9px] font-extrabold text-slate-700 mt-1 text-center truncate w-full">${skinName}</span>
           `;
@@ -882,7 +944,8 @@
         container.appendChild(card);
       }
 
-      document.getElementById('skin-count-indicator').innerText = `${matchCount} Skins`;
+      document.getElementById('skin-count-indicator').innerText = `${matchCount} Items`;
+      document.getElementById('category-subtitle').innerText = activeCategory === 'favorites' ? `${userFavorites.length} Saved Favs` : '40 items';
     }
 
     function filterSkins() {
@@ -897,50 +960,147 @@
 
       const activeLabel = document.getElementById('active-skin-title');
 
+      if (activeCategory === 'favorites') {
+        const fav = userFavorites[index - 1];
+        if (fav) {
+          addLayerToStack(fav.dataUrl, fav.name, activeCategory);
+        }
+        return;
+      }
+
       if (index === 0) {
         if (activeCategory === 'backgrounds') {
           activeLabel.innerText = '🏞️ Blank Custom World - Draw Your Own Sky/Land!';
           currentWorldBackground = -1;
         } else {
           activeLabel.innerText = '🎨 Blank Canvas (Clean Start)';
-          clearCanvas();
         }
       } else {
         const name = ITEM_NAMES[activeCategory][index - 1] || `Item #${index}`;
+        document.getElementById('studio-actor-name').value = name;
         if (activeCategory === 'backgrounds') {
           activeLabel.innerText = `🏞️ World: ${name} Selected!`;
           currentWorldBackground = index;
           customBackgroundDataUrl = null;
         } else {
-          activeLabel.innerText = `✨ ${name} Loaded - Draw & Customize!`;
-          loadSkinToCanvas(activeCategory, index);
+          const skinUrl = generateSkinSVG(activeCategory, index);
+          addLayerToStack(skinUrl, name, activeCategory);
         }
       }
     }
 
-    function loadSkinToCanvas(cat, index) {
-      const svgUrl = generateSkinSVG(cat, index);
-      const img = new Image();
-      img.onload = () => {
-        studioCtx.clearRect(0, 0, studioCanvas.width, studioCanvas.height);
-        const padding = 20;
-        const size = studioCanvas.width - (padding * 2);
-        studioCtx.drawImage(img, padding, padding, size, size);
+    /* --------------------------------------------------
+     * MULTI-LAYER STACK & FREE DRAG FUNCTIONS
+     * -------------------------------------------------- */
+    function addLayerToStack(dataUrl, name, category) {
+      playSound('magic');
+      const newLayer = {
+        id: Date.now() + Math.random(),
+        dataUrl,
+        name,
+        category,
+        scale: 1.0,
+        x: 0, // center offset
+        y: 0
       };
-      img.src = svgUrl;
+      layerStack.push(newLayer);
+      selectedLayerIndex = layerStack.length - 1;
+      renderLayerStack();
+      redrawStudioCanvas();
+    }
+
+    function renderLayerStack() {
+      const list = document.getElementById('layer-stack-list');
+      const countSpan = document.getElementById('layer-count');
+      countSpan.innerText = layerStack.length;
+      list.innerHTML = '';
+
+      if (layerStack.length === 0) {
+        list.innerHTML = `<span class="text-[10px] text-slate-400 font-bold italic">Click any skin/stamp above to add as a layer! Drag on canvas to move freely.</span>`;
+        document.getElementById('layer-adjust-bar').classList.add('hidden');
+        return;
+      }
+
+      layerStack.forEach((layer, idx) => {
+        const isSelected = selectedLayerIndex === idx;
+        const thumb = document.createElement('div');
+        thumb.className = `relative flex items-center gap-1 px-2 py-1 rounded-xl cursor-pointer border-2 shrink-0 ${isSelected ? 'bg-purple-200 border-purple-700 ring-2 ring-purple-400' : 'bg-white border-slate-200 hover:border-purple-300'}`;
+        thumb.innerHTML = `
+          <img src="${layer.dataUrl}" class="w-7 h-7 object-contain">
+          <div class="flex flex-col">
+            <span class="text-[10px] font-extrabold text-slate-800 truncate max-w-[80px]">${layer.name}</span>
+            <span class="text-[8px] text-purple-700 font-bold">${Math.round(layer.scale*100)}%</span>
+          </div>
+        `;
+        thumb.onclick = () => selectLayer(idx);
+        list.appendChild(thumb);
+      });
+
+      updateLayerAdjustBar();
+    }
+
+    function selectLayer(idx) {
+      playSound('tap');
+      selectedLayerIndex = idx;
+      renderLayerStack();
+    }
+
+    function updateLayerAdjustBar() {
+      const bar = document.getElementById('layer-adjust-bar');
+      if (selectedLayerIndex !== null && layerStack[selectedLayerIndex]) {
+        bar.classList.remove('hidden');
+        const layer = layerStack[selectedLayerIndex];
+        document.getElementById('adjusting-layer-name').innerText = `Layer: ${layer.name}`;
+        document.getElementById('adjust-scale-val').innerText = `${Math.round(layer.scale * 100)}%`;
+      } else {
+        bar.classList.add('hidden');
+      }
+    }
+
+    function adjustSelectedLayerScale(delta) {
+      if (selectedLayerIndex !== null && layerStack[selectedLayerIndex]) {
+        playSound('tap');
+        layerStack[selectedLayerIndex].scale = Math.max(0.3, Math.min(2.5, layerStack[selectedLayerIndex].scale + delta));
+        renderLayerStack();
+        redrawStudioCanvas();
+      }
+    }
+
+    function removeSelectedLayer() {
+      if (selectedLayerIndex !== null && layerStack[selectedLayerIndex]) {
+        playSound('pop');
+        layerStack.splice(selectedLayerIndex, 1);
+        selectedLayerIndex = layerStack.length > 0 ? layerStack.length - 1 : null;
+        renderLayerStack();
+        redrawStudioCanvas();
+      }
+    }
+
+    function clearAllLayers() {
+      playSound('pop');
+      layerStack = [];
+      selectedLayerIndex = null;
+      renderLayerStack();
+      redrawStudioCanvas();
     }
 
     /* --------------------------------------------------
-     * 3. STUDIO CANVAS DRAWING LOGIC
+     * 3. STUDIO DRAWING & CANVAS COMPOSITING
      * -------------------------------------------------- */
     const studioCanvas = document.getElementById('studio-canvas');
     const studioCtx = studioCanvas.getContext('2d');
     let isDrawing = false;
+    let isDraggingLayer = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+
     let currentTool = 'pen';
     let brushColor = '#FF6B6B';
     let isRainbow = false;
     let rainbowHue = 0;
     let brushSize = 10;
+    let drawingCanvas = document.createElement('canvas'); // stores freehand drawing
+    let drawingCtx = drawingCanvas.getContext('2d');
 
     const paletteColors = [
       '#FF6B6B', '#FFD166', '#06D6A0', '#4ECDC4', '#118AB2', 
@@ -958,28 +1118,26 @@
         palContainer.appendChild(btn);
       });
 
-      studioCanvas.addEventListener('mousedown', startDrawing);
-      studioCanvas.addEventListener('mousemove', draw);
-      studioCanvas.addEventListener('mouseup', stopDrawing);
-      studioCanvas.addEventListener('mouseleave', stopDrawing);
+      studioCanvas.addEventListener('mousedown', onCanvasDown);
+      studioCanvas.addEventListener('mousemove', onCanvasMove);
+      studioCanvas.addEventListener('mouseup', onCanvasUp);
+      studioCanvas.addEventListener('mouseleave', onCanvasUp);
 
       studioCanvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
         const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousedown', { clientX: touch.clientX, clientY: touch.clientY });
-        studioCanvas.dispatchEvent(mouseEvent);
+        onCanvasDown({ clientX: touch.clientX, clientY: touch.clientY });
       });
       studioCanvas.addEventListener('touchmove', (e) => {
         e.preventDefault();
         const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousemove', { clientX: touch.clientX, clientY: touch.clientY });
-        studioCanvas.dispatchEvent(mouseEvent);
+        onCanvasMove({ clientX: touch.clientX, clientY: touch.clientY });
       });
       studioCanvas.addEventListener('touchend', () => {
-        const mouseEvent = new MouseEvent('mouseup', {});
-        studioCanvas.dispatchEvent(mouseEvent);
+        onCanvasUp();
       });
 
+      resizeStudioCanvas();
       renderSkinsGrid();
       buildAnimationUI();
       window.addEventListener('resize', resizeStudioCanvas);
@@ -993,20 +1151,62 @@
       if (size <= 0) return;
       
       const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = studioCanvas.width;
-      tempCanvas.height = studioCanvas.height;
-      if (tempCanvas.width > 0) {
-        tempCanvas.getContext('2d').drawImage(studioCanvas, 0, 0);
-      }
+      tempCanvas.width = drawingCanvas.width || size;
+      tempCanvas.height = drawingCanvas.height || size;
+      tempCanvas.getContext('2d').drawImage(drawingCanvas, 0, 0);
 
       studioCanvas.width = size;
       studioCanvas.height = size;
+      drawingCanvas.width = size;
+      drawingCanvas.height = size;
 
-      if (tempCanvas.width > 0) {
-        studioCtx.drawImage(tempCanvas, 0, 0, size, size);
-      } else {
-        clearCanvas();
+      drawingCtx.drawImage(tempCanvas, 0, 0, size, size);
+      redrawStudioCanvas();
+    }
+
+    function redrawStudioCanvas() {
+      const w = studioCanvas.width;
+      const h = studioCanvas.height;
+      studioCtx.clearRect(0, 0, w, h);
+
+      let loadedImagesCount = 0;
+      if (layerStack.length === 0) {
+        studioCtx.drawImage(drawingCanvas, 0, 0);
+        return;
       }
+
+      const images = layerStack.map(layer => {
+        const img = new Image();
+        img.src = layer.dataUrl;
+        return { img, layer };
+      });
+
+      function renderComposite() {
+        studioCtx.clearRect(0, 0, w, h);
+        images.forEach(({ img, layer }) => {
+          if (img.complete) {
+            studioCtx.save();
+            const baseW = w * 0.75 * layer.scale;
+            const baseH = h * 0.75 * layer.scale;
+            const cx = w / 2 + layer.x;
+            const cy = h / 2 + layer.y;
+            studioCtx.translate(cx, cy);
+            studioCtx.drawImage(img, -baseW / 2, -baseH / 2, baseW, baseH);
+            studioCtx.restore();
+          }
+        });
+        studioCtx.drawImage(drawingCanvas, 0, 0);
+      }
+
+      images.forEach(({ img }) => {
+        img.onload = () => {
+          loadedImagesCount++;
+          if (loadedImagesCount === images.length) {
+            renderComposite();
+          }
+        };
+      });
+      renderComposite();
     }
 
     function selectColor(color, element) {
@@ -1019,6 +1219,16 @@
       btns.forEach(b => b.classList.remove('border-black', 'scale-110'));
       if (element) element.classList.add('border-black', 'scale-110');
       
+      if (currentTool === 'eraser') setTool('pen');
+    }
+
+    function selectCustomColor(color) {
+      playSound('tap');
+      brushColor = color;
+      isRainbow = false;
+      document.getElementById('rainbow-brush-btn').classList.remove('ring-2', 'ring-yellow-300');
+      const btns = document.querySelectorAll('#color-palette button');
+      btns.forEach(b => b.classList.remove('border-black', 'scale-110'));
       if (currentTool === 'eraser') setTool('pen');
     }
 
@@ -1043,15 +1253,14 @@
       playSound('tap');
       currentTool = tool;
       const penBtn = document.getElementById('tool-pen');
+      const bucketBtn = document.getElementById('tool-bucket');
       const eraserBtn = document.getElementById('tool-eraser');
 
-      if (tool === 'pen') {
-        penBtn.className = 'px-2 py-0.5 rounded-lg bg-purple-600 text-white font-bold text-[11px]';
-        eraserBtn.className = 'px-2 py-0.5 rounded-lg bg-slate-200 text-slate-700 font-bold text-[11px]';
-      } else {
-        eraserBtn.className = 'px-2 py-0.5 rounded-lg bg-purple-600 text-white font-bold text-[11px]';
-        penBtn.className = 'px-2 py-0.5 rounded-lg bg-slate-200 text-slate-700 font-bold text-[11px]';
-      }
+      [penBtn, bucketBtn, eraserBtn].forEach(b => b.className = 'px-2 py-0.5 rounded-lg bg-slate-200 text-slate-700 font-bold text-[11px]');
+      
+      if (tool === 'pen') penBtn.className = 'px-2 py-0.5 rounded-lg bg-purple-600 text-white font-bold text-[11px]';
+      else if (tool === 'bucket') bucketBtn.className = 'px-2 py-0.5 rounded-lg bg-purple-600 text-white font-bold text-[11px]';
+      else eraserBtn.className = 'px-2 py-0.5 rounded-lg bg-purple-600 text-white font-bold text-[11px]';
     }
 
     function setCategory(cat) {
@@ -1071,7 +1280,7 @@
       });
 
       document.getElementById('skin-search').value = '';
-      selectSkin(0);
+      renderSkinsGrid();
     }
 
     function getCanvasPos(e) {
@@ -1082,53 +1291,146 @@
       };
     }
 
-    function startDrawing(e) {
+    function onCanvasDown(e) {
       initAudio();
-      isDrawing = true;
       const pos = getCanvasPos(e);
-      studioCtx.beginPath();
-      studioCtx.moveTo(pos.x, pos.y);
+
+      // Check if we are interacting with selected layer position drag
+      if (selectedLayerIndex !== null && layerStack[selectedLayerIndex] && currentTool === 'pen' && e.shiftKey) {
+        isDraggingLayer = true;
+        dragStartX = pos.x - layerStack[selectedLayerIndex].x;
+        dragStartY = pos.y - layerStack[selectedLayerIndex].y;
+        return;
+      }
+
+      if (currentTool === 'bucket') {
+        floodFill(Math.floor(pos.x), Math.floor(pos.y), brushColor);
+        playSound('magic');
+      } else {
+        isDrawing = true;
+        drawingCtx.beginPath();
+        drawingCtx.moveTo(pos.x, pos.y);
+      }
     }
 
-    function draw(e) {
-      if (!isDrawing) return;
+    function onCanvasMove(e) {
       const pos = getCanvasPos(e);
+      if (isDraggingLayer && selectedLayerIndex !== null && layerStack[selectedLayerIndex]) {
+        layerStack[selectedLayerIndex].x = pos.x - dragStartX;
+        layerStack[selectedLayerIndex].y = pos.y - dragStartY;
+        redrawStudioCanvas();
+        return;
+      }
 
-      studioCtx.lineWidth = brushSize;
-      studioCtx.lineCap = 'round';
-      studioCtx.lineJoin = 'round';
+      if (!isDrawing || currentTool === 'bucket') return;
+
+      drawingCtx.lineWidth = brushSize;
+      drawingCtx.lineCap = 'round';
+      drawingCtx.lineJoin = 'round';
 
       if (currentTool === 'eraser') {
-        studioCtx.globalCompositeOperation = 'destination-out';
-        studioCtx.strokeStyle = 'rgba(0,0,0,1)';
+        drawingCtx.globalCompositeOperation = 'destination-out';
+        drawingCtx.strokeStyle = 'rgba(0,0,0,1)';
       } else {
-        studioCtx.globalCompositeOperation = 'source-over';
+        drawingCtx.globalCompositeOperation = 'source-over';
         if (isRainbow) {
           rainbowHue = (rainbowHue + 4) % 360;
-          studioCtx.strokeStyle = `hsl(${rainbowHue}, 90%, 60%)`;
+          drawingCtx.strokeStyle = `hsl(${rainbowHue}, 90%, 60%)`;
         } else {
-          studioCtx.strokeStyle = brushColor;
+          drawingCtx.strokeStyle = brushColor;
         }
       }
 
-      studioCtx.lineTo(pos.x, pos.y);
-      studioCtx.stroke();
+      drawingCtx.lineTo(pos.x, pos.y);
+      drawingCtx.stroke();
+      redrawStudioCanvas();
     }
 
-    function stopDrawing() {
-      if (isDrawing) {
-        studioCtx.closePath();
-        isDrawing = false;
+    function onCanvasUp() {
+      isDrawing = false;
+      isDraggingLayer = false;
+    }
+
+    function floodFill(startX, startY, fillColorHex) {
+      const w = studioCanvas.width;
+      const h = studioCanvas.height;
+      const imgData = studioCtx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+
+      const startIndex = (startY * w + startX) * 4;
+      const startR = data[startIndex];
+      const startG = data[startIndex + 1];
+      const startB = data[startIndex + 2];
+      const startA = data[startIndex + 3];
+
+      const tempC = document.createElement('canvas');
+      tempC.width = 1; tempC.height = 1;
+      const tempCtx = tempC.getContext('2d');
+      tempCtx.fillStyle = fillColorHex;
+      tempCtx.fillRect(0,0,1,1);
+      const fillColor = tempCtx.getImageData(0,0,1,1).data;
+
+      if (startR === fillColor[0] && startG === fillColor[1] && startB === fillColor[2] && startA === fillColor[3]) return;
+
+      function colorMatch(idx) {
+        return (
+          Math.abs(data[idx] - startR) < 30 &&
+          Math.abs(data[idx+1] - startG) < 30 &&
+          Math.abs(data[idx+2] - startB) < 30 &&
+          Math.abs(data[idx+3] - startA) < 30
+        );
       }
+
+      const queue = [[startX, startY]];
+      const visited = new Uint8Array(w * h);
+      const drawImgData = drawingCtx.getImageData(0, 0, w, h);
+      const drawData = drawImgData.data;
+
+      while (queue.length > 0) {
+        const [x, y] = queue.pop();
+        const pixelIdx = (y * w + x);
+        if (visited[pixelIdx]) continue;
+        visited[pixelIdx] = 1;
+
+        const dataIdx = pixelIdx * 4;
+        if (!colorMatch(dataIdx)) continue;
+
+        drawData[dataIdx] = fillColor[0];
+        drawData[dataIdx+1] = fillColor[1];
+        drawData[dataIdx+2] = fillColor[2];
+        drawData[dataIdx+3] = fillColor[3];
+
+        if (x > 0) queue.push([x - 1, y]);
+        if (x < w - 1) queue.push([x + 1, y]);
+        if (y > 0) queue.push([x, y - 1]);
+        if (y < h - 1) queue.push([x, y + 1]);
+      }
+
+      drawingCtx.putImageData(drawImgData, 0, 0);
+      redrawStudioCanvas();
     }
 
     function clearCanvas() {
       playSound('pop');
-      studioCtx.clearRect(0, 0, studioCanvas.width, studioCanvas.height);
+      drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+      redrawStudioCanvas();
+    }
+
+    function saveCurrentToFavorites() {
+      playSound('save');
+      const dataUrl = studioCanvas.toDataURL();
+      const defaultName = document.getElementById('studio-actor-name').value.trim() || `Masterpiece #${userFavorites.length + 1}`;
+      const favName = prompt('Give your custom creation a name:', defaultName);
+      if (!favName) return;
+
+      userFavorites.push({ name: favName, dataUrl });
+      triggerScreenSparkles();
+      alert('⭐ Saved to Favorites successfully!');
+      if (activeCategory === 'favorites') renderSkinsGrid();
     }
 
     /* --------------------------------------------------
-     * 4. KINGDOM ACTOR & SPEECH BUBBLE ENGINE
+     * 4. KINGDOM ACTOR, GRAVITY MODE & WORLD ENGINE
      * -------------------------------------------------- */
     const worldCanvas = document.getElementById('world-canvas');
     const worldCtx = worldCanvas.getContext('2d');
@@ -1139,18 +1441,53 @@
     let dragOffsetY = 0;
     let particles = [];
 
+    let cameraX = 0;
+    let cameraY = 0;
+    let worldWidth = 2400;
+    let worldHeight = 1600;
+    let isPanning = false;
+    let panStartX = 0;
+    let panStartY = 0;
+
+    // GRAVITY MODE ("Throw & Toss") VARIABLES
+    let gravityModeEnabled = false;
+    let throwLastX = 0;
+    let throwLastY = 0;
+    let throwTime = 0;
+    let throwVx = 0;
+    let throwVy = 0;
+
+    function toggleGravityMode() {
+      playSound('magic');
+      gravityModeEnabled = !gravityModeEnabled;
+      const btnLabel = document.getElementById('gravity-btn-label');
+      const btn = document.getElementById('gravity-toggle-btn');
+      if (gravityModeEnabled) {
+        btnLabel.innerText = 'Gravity: ON ☄️';
+        btn.className = 'candy-btn bg-amber-500 text-white hover:bg-amber-400 p-1.5 md:p-2 px-2.5 md:px-3 rounded-2xl font-bold flex items-center gap-1 border-2 border-amber-600 text-xs md:text-sm';
+      } else {
+        btnLabel.innerText = 'Gravity: Off';
+        btn.className = 'candy-btn bg-indigo-500 text-white hover:bg-indigo-400 p-1.5 md:p-2 px-2.5 md:px-3 rounded-2xl font-bold flex items-center gap-1 border-2 border-indigo-600 text-xs md:text-sm';
+      }
+    }
+
     class KingdomActor {
-      constructor(imgData, category, x, y, speech = '') {
+      constructor(imgData, category, x, y, speech = '', actorName = '') {
         this.id = Date.now() + Math.random();
         this.category = category;
         this.x = x;
         this.y = y;
+        this.vx = 0;
+        this.vy = 0;
+        this.isThrown = false;
+
         this.baseSize = 110;
         this.scale = 1.0;
         this.imgData = imgData;
         this.img = new Image();
         this.img.src = imgData;
 
+        this.actorName = actorName || 'Hero Actor';
         this.speechText = speech;
         this.speechTimer = speech ? 300 : 0;
         this.animation = 'idle';
@@ -1164,11 +1501,28 @@
       }
 
       update(width, height) {
-        this.animTimer += 0.08;
+        if (gravityModeEnabled && this.isThrown) {
+          this.vy += 0.6; // gravity
+          this.x += this.vx;
+          this.y += this.vy;
+          this.vx *= 0.98; // friction
 
-        if (this.speechTimer > 0) {
-          this.speechTimer--;
+          // Floor bounce
+          const floorY = height - 180;
+          if (this.y > floorY) {
+            this.y = floorY;
+            this.vy = -this.vy * 0.55; // bounce restitution
+            this.vx *= 0.8;
+            if (Math.abs(this.vy) < 1.5) {
+              this.isThrown = false;
+              this.vy = 0;
+            }
+          }
+          return;
         }
+
+        this.animTimer += 0.08;
+        if (this.speechTimer > 0) this.speechTimer--;
 
         let targetBounceY = 0;
         let targetAngle = 0;
@@ -1254,6 +1608,22 @@
           ctx.drawImage(this.img, -w / 2, -h / 2, w, h);
         }
 
+        if (this.actorName) {
+          ctx.save();
+          ctx.scale(dir, 1);
+          ctx.font = 'bold 11px Fredoka, sans-serif';
+          const nameW = ctx.measureText(this.actorName).width;
+          ctx.fillStyle = 'rgba(0,0,0,0.65)';
+          ctx.beginPath();
+          ctx.roundRect(-nameW / 2 - 6, h / 2 + 2, nameW + 12, 18, 9);
+          ctx.fill();
+          ctx.fillStyle = '#FFD166';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(this.actorName, 0, h / 2 + 11);
+          ctx.restore();
+        }
+
         if (selectedObject === this) {
           ctx.strokeStyle = '#FFD166';
           ctx.lineWidth = 4;
@@ -1272,7 +1642,7 @@
 
       drawSpeechBubble(ctx) {
         ctx.save();
-        const topY = this.y + this.bounceY - (this.baseSize * this.scale * 0.6) - 15;
+        const topY = this.y + this.bounceY - (this.baseSize * this.scale * 0.6) - 22;
         ctx.font = 'bold 13px Fredoka, sans-serif';
         const textWidth = ctx.measureText(this.speechText).width;
         const bubbleWidth = Math.max(70, textWidth + 24);
@@ -1319,14 +1689,12 @@
 
       clickSoftReaction() {
         playSound(this.category || 'bounce');
-        
         if (!this.speechText || this.speechTimer <= 0) {
           const list = DEFAULT_SPEECH[this.category] || DEFAULT_SPEECH.people;
           this.speechText = list[Math.floor(Math.random() * list.length)];
           playSound('speech');
         }
         this.speechTimer = 240;
-
         for (let i = 0; i < 6; i++) {
           particles.push(new Particle(this.x, this.y - 10));
         }
@@ -1363,7 +1731,6 @@
     function initWorld() {
       resizeWorldCanvas();
       window.addEventListener('resize', resizeWorldCanvas);
-
       createStarterKingdom();
 
       worldCanvas.addEventListener('mousedown', onWorldMouseDown);
@@ -1390,27 +1757,26 @@
       if (!container) return;
       worldCanvas.width = container.clientWidth;
       worldCanvas.height = container.clientHeight;
+      worldWidth = Math.max(worldCanvas.width * 2, 2400);
+      worldHeight = Math.max(worldCanvas.height * 2, 1600);
     }
 
     function createStarterKingdom() {
-      const w = window.innerWidth || 800;
-      const h = window.innerHeight || 600;
-
-      const starterCats = ['people', 'face', 'animal', 'tool', 'monster', 'vehicle', 'castle', 'tree'];
+      const starterCats = ['people', 'face', 'animal', 'tool', 'monster', 'vehicle', 'castle', 'stamps'];
       starterCats.forEach((cat, idx) => {
         const svgUrl = generateSkinSVG(cat, (idx % 8) + 1);
-        const posX = w * (0.12 + idx * 0.10);
-        const posY = h * (0.50 + (idx % 2) * 0.12);
+        const posX = worldWidth * (0.1 + idx * 0.1);
+        const posY = worldHeight * (0.50 + (idx % 2) * 0.12);
         const defaultPhrases = DEFAULT_SPEECH[cat] || ["Hello!"];
         const phrase = defaultPhrases[idx % defaultPhrases.length];
-        worldObjects.push(new KingdomActor(svgUrl, cat, posX, posY, phrase));
+        const defaultName = cat.toUpperCase();
+        worldObjects.push(new KingdomActor(svgUrl, cat, posX, posY, phrase, defaultName));
       });
     }
 
     function buildAnimationUI() {
       const container = document.getElementById('anim-selector-container');
       container.innerHTML = '';
-
       ANIMATIONS.forEach(anim => {
         const chip = document.createElement('button');
         chip.id = `anim-chip-${anim.id}`;
@@ -1434,11 +1800,8 @@
       ANIMATIONS.forEach(anim => {
         const chip = document.getElementById(`anim-chip-${anim.id}`);
         if (chip) {
-          if (selectedObject.animation === anim.id) {
-            chip.classList.add('active');
-          } else {
-            chip.classList.remove('active');
-          }
+          if (selectedObject.animation === anim.id) chip.classList.add('active');
+          else chip.classList.remove('active');
         }
       });
     }
@@ -1449,6 +1812,12 @@
         playSound('speech');
         selectedObject.speechText = input.value.trim();
         selectedObject.speechTimer = selectedObject.speechText ? 300 : 0;
+      }
+    }
+
+    function updateActorName(val) {
+      if (selectedObject) {
+        selectedObject.actorName = val.trim();
       }
     }
 
@@ -1466,14 +1835,15 @@
       }
 
       const drawnDataUrl = studioCanvas.toDataURL();
+      const actorName = document.getElementById('studio-actor-name').value.trim() || 'Custom Multi-Actor';
 
-      const spawnX = worldCanvas.width / 2 + (Math.random() - 0.5) * 120;
-      const spawnY = worldCanvas.height / 2 + (Math.random() - 0.5) * 100;
+      const spawnX = cameraX + worldCanvas.width / 2 + (Math.random() - 0.5) * 120;
+      const spawnY = cameraY + worldCanvas.height / 2 + (Math.random() - 0.5) * 100;
 
       const list = DEFAULT_SPEECH[activeCategory] || DEFAULT_SPEECH.people;
       const speech = list[Math.floor(Math.random() * list.length)];
 
-      const newActor = new KingdomActor(drawnDataUrl, activeCategory, spawnX, spawnY, speech);
+      const newActor = new KingdomActor(drawnDataUrl, activeCategory, spawnX, spawnY, speech, actorName);
       worldObjects.push(newActor);
       selectedObject = newActor;
 
@@ -1499,13 +1869,14 @@
 
     function worldLoop() {
       worldCtx.clearRect(0, 0, worldCanvas.width, worldCanvas.height);
+      worldCtx.save();
+      worldCtx.translate(-cameraX, -cameraY);
 
-      drawKingdomEnvironment(worldCtx, worldCanvas.width, worldCanvas.height);
+      drawKingdomEnvironment(worldCtx, worldWidth, worldHeight);
 
       worldObjects.sort((a, b) => a.y - b.y);
-
       worldObjects.forEach(obj => {
-        obj.update(worldCanvas.width, worldCanvas.height);
+        obj.update(worldWidth, worldHeight);
         obj.draw(worldCtx);
       });
 
@@ -1515,6 +1886,7 @@
         p.draw(worldCtx);
       });
 
+      worldCtx.restore();
       requestAnimationFrame(worldLoop);
     }
 
@@ -1577,8 +1949,8 @@
     function onWorldMouseDown(e) {
       initAudio();
       const rect = worldCanvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
+      const mx = e.clientX - rect.left + cameraX;
+      const my = e.clientY - rect.top + cameraY;
 
       let clickedObj = null;
       for (let i = worldObjects.length - 1; i >= 0; i--) {
@@ -1593,37 +1965,74 @@
         draggedObject = clickedObj;
         dragOffsetX = mx - clickedObj.x;
         dragOffsetY = my - clickedObj.y;
+        
+        throwLastX = mx;
+        throwLastY = my;
+        throwTime = Date.now();
+        throwVx = 0;
+        throwVy = 0;
+
+        if (gravityModeEnabled) {
+          clickedObj.isThrown = true;
+        }
+
         clickedObj.clickSoftReaction();
         updateControlPanel();
       } else {
         selectedObject = null;
+        isPanning = true;
+        panStartX = e.clientX;
+        panStartY = e.clientY;
         updateControlPanel();
       }
     }
 
     function onWorldMouseMove(e) {
-      if (!draggedObject) return;
       const rect = worldCanvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
+      const mx = e.clientX - rect.left + cameraX;
+      const my = e.clientY - rect.top + cameraY;
 
-      draggedObject.x = mx - dragOffsetX;
-      draggedObject.y = my - dragOffsetY;
+      if (draggedObject) {
+        const now = Date.now();
+        const dt = (now - throwTime) || 16;
+        throwVx = (mx - throwLastX) / (dt / 16);
+        throwVy = (my - throwLastY) / (dt / 16);
+        throwLastX = mx;
+        throwLastY = my;
+        throwTime = now;
+
+        draggedObject.x = mx - dragOffsetX;
+        draggedObject.y = my - dragOffsetY;
+      } else if (isPanning) {
+        const dx = e.clientX - panStartX;
+        const dy = e.clientY - panStartY;
+        cameraX = Math.max(0, Math.min(worldWidth - worldCanvas.width, cameraX - dx));
+        cameraY = Math.max(0, Math.min(worldHeight - worldCanvas.height, cameraY - dy));
+        panStartX = e.clientX;
+        panStartY = e.clientY;
+      }
     }
 
     function onWorldMouseUp() {
+      if (draggedObject && gravityModeEnabled) {
+        draggedObject.vx = Math.max(-25, Math.min(25, throwVx * 1.2));
+        draggedObject.vy = Math.max(-25, Math.min(25, throwVy * 1.2));
+      }
       draggedObject = null;
+      isPanning = false;
     }
 
     function updateControlPanel() {
       const panel = document.getElementById('item-control-panel');
       const label = document.getElementById('selected-item-label');
       const speechInput = document.getElementById('speech-input');
+      const actorNameInput = document.getElementById('actor-name-input');
 
       if (selectedObject) {
         panel.classList.remove('hidden');
         label.innerText = `${selectedObject.category}`;
         if (speechInput) speechInput.value = selectedObject.speechText || '';
+        if (actorNameInput) actorNameInput.value = selectedObject.actorName || '';
         updateAnimationChips();
       } else {
         panel.classList.add('hidden');
@@ -1634,6 +2043,26 @@
       if (selectedObject) {
         playSound('tap');
         selectedObject.scale = Math.max(0.4, Math.min(2.5, selectedObject.scale * factor));
+      }
+    }
+
+    function cloneSelectedItem() {
+      if (selectedObject) {
+        playSound('magic');
+        const clone = new KingdomActor(
+          selectedObject.imgData,
+          selectedObject.category,
+          selectedObject.x + 40,
+          selectedObject.y + 40,
+          selectedObject.speechText,
+          selectedObject.actorName + ' (Copy)'
+        );
+        clone.scale = selectedObject.scale;
+        clone.animation = selectedObject.animation;
+        worldObjects.push(clone);
+        selectedObject = clone;
+        updateControlPanel();
+        triggerScreenSparkles();
       }
     }
 
@@ -1652,7 +2081,7 @@
     }
 
     /* --------------------------------------------------
-     * 5. LOCAL STORAGE SAVE & LOAD KINGDOM
+     * 5. LOCAL STORAGE SAVE & LOAD
      * -------------------------------------------------- */
     const STORAGE_KEY = 'doodle_kingdom_save_data';
 
@@ -1662,6 +2091,7 @@
         const kingdomData = {
           currentWorldBackground,
           customBackgroundDataUrl,
+          userFavorites,
           quests: quests.map(q => ({ id: q.id, current: q.current, done: q.done })),
           objects: worldObjects.map(obj => ({
             category: obj.category,
@@ -1670,15 +2100,16 @@
             scale: obj.scale,
             animation: obj.animation,
             speechText: obj.speechText,
+            actorName: obj.actorName,
             imgData: obj.imgData
           }))
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(kingdomData));
         triggerScreenSparkles();
-        alert('✨ Kingdom Saved Successfully!');
+        alert('✨ Kingdom & Favorites Saved Successfully!');
       } catch (err) {
-        console.error('Failed to save kingdom:', err);
-        alert('Unable to save kingdom. Storage may be full.');
+        console.error(err);
+        alert('Unable to save kingdom.');
       }
     }
 
@@ -1691,9 +2122,9 @@
         }
         playSound('load');
         const data = JSON.parse(raw);
-
         currentWorldBackground = data.currentWorldBackground || 0;
         customBackgroundDataUrl = data.customBackgroundDataUrl || null;
+        if (data.userFavorites) userFavorites = data.userFavorites;
 
         if (data.quests) {
           data.quests.forEach(sq => {
@@ -1708,7 +2139,7 @@
 
         if (data.objects) {
           worldObjects = data.objects.map(o => {
-            const actor = new KingdomActor(o.imgData, o.category, o.x, o.y, o.speechText || '');
+            const actor = new KingdomActor(o.imgData, o.category, o.x, o.y, o.speechText || '', o.actorName || '');
             actor.scale = o.scale || 1.0;
             actor.animation = o.animation || 'idle';
             return actor;
@@ -1717,16 +2148,17 @@
 
         selectedObject = null;
         updateControlPanel();
+        renderSkinsGrid();
         triggerScreenSparkles();
         alert('🏰 Kingdom Loaded Successfully!');
       } catch (err) {
-        console.error('Failed to load kingdom:', err);
+        console.error(err);
         alert('Error loading saved kingdom data.');
       }
     }
 
     /* --------------------------------------------------
-     * 6. MODE SWITCHING & QUEST LOGIC
+     * 6. MODE SWITCHING & QUESTS
      * -------------------------------------------------- */
     function switchMode(mode) {
       playSound('tap');
@@ -1752,14 +2184,15 @@
 
     const quests = [
       { id: 'people', title: 'Add 1 Hero Character', target: 1, current: 0, done: false, icon: '👥' },
-      { id: 'face', title: 'Add 1 Face Emoji (Skin Tone)', target: 1, current: 0, done: false, icon: '😀' },
+      { id: 'face', title: 'Add 1 Face Emoji', target: 1, current: 0, done: false, icon: '😀' },
       { id: 'animal', title: 'Add 1 Animal Companion', target: 1, current: 0, done: false, icon: '🐾' },
       { id: 'tool', title: 'Add 1 Crafting Tool', target: 1, current: 0, done: false, icon: '🛠️' },
       { id: 'monster', title: 'Add 1 Monster Creature', target: 1, current: 0, done: false, icon: '👾' },
       { id: 'vehicle', title: 'Add 1 Vehicle', target: 1, current: 0, done: false, icon: '🚒' },
       { id: 'castle', title: 'Build 1 Castle Fortress', target: 1, current: 0, done: false, icon: '🏰' },
       { id: 'tree', title: 'Plant 1 Tree', target: 1, current: 0, done: false, icon: '🌳' },
-      { id: 'backgrounds', title: 'Pick a Custom Background Theme', target: 1, current: 0, done: false, icon: '🏞️' }
+      { id: 'legs', title: 'Equip Custom Leg Style', target: 1, current: 0, done: false, icon: '🦵' },
+      { id: 'stamps', title: 'Place 1 Sticker Stamp', target: 1, current: 0, done: false, icon: '✨' }
     ];
 
     function renderQuests() {
@@ -1804,9 +2237,6 @@
       document.getElementById('quest-panel').classList.toggle('hidden');
     }
 
-    /* --------------------------------------------------
-     * 7. INITIALIZATION
-     * -------------------------------------------------- */
     window.onload = () => {
       initStudio();
       initWorld();
